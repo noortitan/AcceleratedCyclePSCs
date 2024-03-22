@@ -30,6 +30,8 @@ To install the required package, create a virtual environment using Anaconda/ Mi
 
 `$ spyder`
 
+The typical installation time should take ~a couple minutes (if Miniconda/ Anaconda is already installed).
+
 ## Workflow
 
 In the dataset folder, it contains the MPPT data for all the temperatures: 25, 35, 45, and 55C, and already filtered out for good, working cells. 
@@ -45,6 +47,8 @@ To run the data analysis, open `20231201_AcceleratedCycleAnalysis_Vmpp_03.py` on
 8. **Read all dataframes, decide withc one is the best**: .
 9. **Find equivalent time/ backcalculation**: for all the PCE MPP curve already fitted, now, the equivalent time length across temperatures is calculated. 
 10. **Boxplot of backcalculation**: this plots all the backcalculation/ equivalent time results together, across temperatures, for all the types of devices.
+
+This whole run could take a couple of hours on "normal" computer, especially in step 6-9. Other than backcalculation, it takes < 1 hour to go through.
 
 ## Authors
 | |  | 
