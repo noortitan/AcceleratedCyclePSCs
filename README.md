@@ -40,7 +40,7 @@ The dataset folder can be downloaded from the following: [![DOI](https://zenodo.
 
 In the dataset folder, it contains the MPPT data for all the temperatures: 25, 35, 45, and 55C, and already filtered out for good, working cells. 
 
-To run the data analysis, open `20231201_AcceleratedCycleAnalysis_Vmpp_03.py` on Spyder. It is split into a couple sections.
+To run the data analysis, open `20240401_AcceleratedCycleAnalysis_Vmpp_04.py` on Spyder. It is split into a couple sections.
 1. **Functions**: contains all the functions needed to run the analysis.
 2. **Loading all parameters**: each batch of experiment (in particular temperature and cycle length), has 8 devices (which has 6 pixels or 'small cells'). Each device corresponds to a specific parameter, and it needs to be named. *Ulas* corresponds to the SAM-based cells, and *Zahra-Batch2* corresponds to the NiOx-based cells. We are loading all the MPP data for these cells in this section. The `limit_h_25C` corresponds to the maximum aging test length you would like to include in this analysis. `folder_run_name` corresponds to the name of folder name where you save all the data from the analysis.
 3. **Load data, calculate energy yield/area per cycle**: this loads the data, calculate energy yield/ area under the MPP PCE curve, for each cycle. It also calculates the statistics for this data.
