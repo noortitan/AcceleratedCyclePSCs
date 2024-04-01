@@ -8,7 +8,7 @@ This documentation is prepared as the workflow to accompany the following study:
 
 *(INSERT JOURNAL INFO)*
 
-Noor Titan Putri Hartono (1), Artem Musiienko (1), Ulas Erdil (1), Zahra Loghman Nia (1), Mark Khenkin (1), Hans Köbler (1), Johannes Beckedahl (1), Rutger Schlatmann (1), Carolin Ulbrich (1), Antonio Abate (1)
+Noor Titan Putri Hartono (1), Artem Musiienko (1), Ulas Erdil (1), Zahra Loghman Nia (1), Mark Khenkin (1), Hans Köbler (1), Johannes Beckedahl (1), Florian Ruske (1), Rutger Schlatmann (1), Carolin Ulbrich (1), Antonio Abate (1)
 
 Affiliations:
 
@@ -31,6 +31,10 @@ To install the required package, create a virtual environment using Anaconda/ Mi
 `$ spyder`
 
 The typical installation time should take ~a couple minutes (if Miniconda/ Anaconda is already installed).
+
+## Dataset
+
+The dataset folder can be downloaded from the following: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10902908.svg)](https://doi.org/10.5281/zenodo.10902908).
 
 ## Workflow
 
