@@ -4,7 +4,7 @@ Version: 2023-11-29
 
 This documentation is prepared as the workflow to accompany the following study:
 
-**"Accelerating Light-Cycled Aging for Testing Perovskite Solar Cells Stability"**
+**"How to accelerate outdoor ageing of perovskite solar cells by indoor testing"**
 
 *(INSERT JOURNAL INFO)*
 
