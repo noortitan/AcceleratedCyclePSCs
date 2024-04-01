@@ -30,7 +30,7 @@ To install the required package, create a virtual environment using Anaconda/ Mi
 
 `$ spyder`
 
-The typical installation time should take ~a couple minutes (if Miniconda/ Anaconda is already installed).
+Open the .py file on Spyder. The typical installation time should take ~a couple minutes (if Miniconda/ Anaconda is already installed).
 
 ## Dataset
 
