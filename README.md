@@ -4,15 +4,23 @@ Version: 2023-11-29
 
 This documentation is prepared as the workflow to accompany the following study:
 
-**"How to accelerate outdoor ageing of perovskite solar cells by indoor testing"**
+**"Predicting Long-term Provskite Solar Cell Stability by Accelerated Indoor Testing"**
 
 *(INSERT JOURNAL INFO)*
 
-Noor Titan Putri Hartono (1), Artem Musiienko (1), Ulas Erdil (1), Zahra Loghman Nia (1), Mark Khenkin (1), Hans Köbler (1), Johannes Beckedahl (1), Florian Ruske (1), Rutger Schlatmann (1), Carolin Ulbrich (1), Antonio Abate (1)
+Noor Titan Putri Hartono (1, 5), Artem Musiienko (2), Ulas Erdil (1), Kazuki Morita (1), Thomas W. Gries (2), Wentao Liu (1), Yanyan Duan (1), Jarla Thiesbrummel (6), Duygu Akin Kara (1), Zhong Zhang (3), Siddha Hill (2), Ying Tang (3), Zahra Loghman Nia (1), Hans Köbler (1), Johannes Beckedahl (1), Mark Khenkin (1), Eva Unger (1), Rutger Schlatmann (1, 4), Felix Lang (6), Carolin Ulbrich (1), Meng Li (3), Antonio Abate (1, 7)
 
 Affiliations:
 
-1. Helmholtz-Zentrum-Berlin für Materialien und Energie, 14109 Berlin, Germany
+1. Helmholtz-Zentrum Berlin für Materialien und Energie, Hahn-Meitner-Platz 1, 14109 Berlin, Germany.
+2. Young Investigator Group, Robotized Material and Photovoltaic Engineering, Helmholtz-Zentrum Berlin für Materialien und Energie (HZB), 12489, Berlin, Germany.
+3. Key Lab for Special Functional Materials of Ministry of Education, National & Local Joint Engineering Research Center for High-Efficiency Display and Lighting Technology, School of Nanoscience and Materials Engineering, and Collaborative Innovation Center of Nano Functional Materials and Applications, Henan University, Kaifeng, 475004, China.
+4. HTW Berlin School of Engineering, Energy and Information, Wilhelminenhofstr. 75a, 12459 Berlin, Germany.
+5. Forschungszentrum Jülich, Institute of Climate and Energy Systems (ICE), Wilhelm-Johnen-Straße, 52428 Jülich, Germany.
+6. Institute of Physics and Astronomy, University of Potsdam, Karl-Liebknecht-Str. 24-25, 14476 Potsdam-Golm, Germany.
+7. Department of Chemistry, Bielefeld University, Universitätsstraße 25, 33615 Bielefeld, Germany.
+
+Preprint is published here: [https://doi.org/10.21203/rs.3.rs-4014242/v1 ](https://doi.org/10.21203/rs.3.rs-4014242/v1 ) 
 
 ## Installation and Requirements
 
