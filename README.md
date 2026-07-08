@@ -6,8 +6,6 @@ This documentation is prepared as the workflow to accompany the following study:
 
 **"Predicting Long-term Provskite Solar Cell Stability by Accelerated Indoor Testing"**
 
-*(INSERT JOURNAL INFO)*
-
 Noor Titan Putri Hartono (1, 5), Artem Musiienko (2), Ulas Erdil (1), Kazuki Morita (1), Thomas W. Gries (2), Wentao Liu (1), Yanyan Duan (1), Jarla Thiesbrummel (6), Duygu Akin Kara (1), Zhong Zhang (3), Siddha Hill (2), Ying Tang (3), Zahra Loghman Nia (1), Hans Köbler (1), Johannes Beckedahl (1), Mark Khenkin (1), Eva Unger (1), Rutger Schlatmann (1, 4), Felix Lang (6), Carolin Ulbrich (1), Meng Li (3), Antonio Abate (1, 7)
 
 Affiliations:
