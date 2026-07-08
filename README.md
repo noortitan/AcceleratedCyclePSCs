@@ -42,23 +42,23 @@ The typical installation time should take ~a couple minutes (if Miniconda/ Anaco
 
 ## Dataset
 
-The dataset folder can be downloaded from the following: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10902908.svg)](https://doi.org/10.5281/zenodo.10902908).
+The dataset folder can be downloaded from the following:
+- v2 (SAM/ high-efficiency): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21242242.svg)](https://doi.org/10.5281/zenodo.21242242)
+- v1 (NiOx-SAM/ low-efficiency): [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10902908.svg)](https://doi.org/10.5281/zenodo.10902908)
 
 ## Workflow
 
 In the dataset folder, it contains the MPPT data for all the temperatures: 25, 35, 45, and 55C, and already filtered out for good, working cells. 
 
-To run the data analysis, open `20240401_AcceleratedCycleAnalysis_Vmpp_04.py` on Spyder. It is split into a couple sections.
+To run the data analysis, open `20260623_AcceleratedCycleAnalysis_Vmpp_04.py` on Spyder. It is split into a couple sections.
 1. **Functions**: contains all the functions needed to run the analysis.
 2. **Loading all parameters**: each batch of experiment (in particular temperature and cycle length), has 8 devices (which has 6 pixels or 'small cells'). Each device corresponds to a specific parameter, and it needs to be named. *Ulas* corresponds to the SAM-based cells, *Zahra-Batch1* corresponds to the NiOx-SAM-based cells, and *Zahra-Batch2* corresponds to the NiOx-based cells. We are loading all the MPP data for these cells in this section. The `limit_h_25C` corresponds to the maximum aging test length you would like to include in this analysis. `folder_run_name` corresponds to the name of folder name where you save all the data from the analysis.
 3. **Load data, calculate energy yield/area per cycle**: this loads the data, calculate energy yield/ area under the MPP PCE curve, for each cycle. It also calculates the statistics for this data.
-4. **Difference in 0 vs. 1000h**: this shows how the PCE and V MPP have changed between 0 to 1000h.
-5. **Plotting part 1**: this section plots the area under various parameters for each batch, and overall.
-6. **Regression of parameters and Arrhenius fitting**: to see the 'slope'/ 'degradation rate', we perform regression for all the data with various parameters, and look at the Arrhenius analysis as well.
-7. **Comparable area across different T**: this fits the PCE MPP curve at each cycle, for all the batches (in 6 different functions). 
-8. **Read all dataframes, decide withc one is the best**: .
-9. **Find equivalent time/ backcalculation**: for all the PCE MPP curve already fitted, now, the equivalent time length across temperatures is calculated. 
-10. **Boxplot of backcalculation**: this plots all the backcalculation/ equivalent time results together, across temperatures, for all the types of devices.
+4. **Regression of parameters and Arrhenius fitting**: to see the 'slope'/ 'degradation rate', we perform regression for all the data with various parameters, and look at the Arrhenius analysis as well.
+5. **Comparable area across different T**: this fits the PCE MPP curve at each cycle, for all the batches (in 6 different functions). 
+6. **Read all dataframes, decide withc one is the best**: .
+7. **Find equivalent time/ backcalculation**: for all the PCE MPP curve already fitted, now, the equivalent time length across temperatures is calculated. 
+8. **Boxplot of backcalculation**: this plots all the backcalculation/ equivalent time results together, across temperatures, for all the types of devices.
 
 This whole run could take a couple of hours on "normal" computer, especially in step 6-9. Other than backcalculation, it takes < 1 hour to go through.
 
@@ -66,8 +66,8 @@ This whole run could take a couple of hours on "normal" computer, especially in 
 | |  | 
 |---|---|
 |**Author(s)** | Noor Titan Putri Hartono |
-|**Version** | 1.0/ December 2023  |   
-|**E-mail(s)**   | titan dot hartono at helmholtz-berlin dot de  |
+|**Version** | 2.0/ June 2026  |   
+|**E-mail(s)**   | t dot hartono at fz hyphen juelich dot de  |
 | | |
 
 ## Attribution
