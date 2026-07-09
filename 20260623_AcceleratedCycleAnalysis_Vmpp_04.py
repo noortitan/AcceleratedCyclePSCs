@@ -65,8 +65,6 @@ parameter_std_list = ['std_VmppArea_perCycle','std_PCEmppArea_perCycle',
 
 parameter_ratio_list = ['PCE_mpp_ratio','V_mpp_ratio']
 
-batchname_list  = ['SAM'] # Yanyan batch new (Antonio-x)
-
 # Get the directory of the current script or file
 current_file_directory = 'C:/Users/t.hartono/sciebo/20250724_HZB_AccCyc/'
 
@@ -93,9 +91,18 @@ def load_data_from_python_into_df(hour_cycle, gap, temperature, path, cell_param
         name, extension = os.path.splitext(filename)
         name_split = name.split("_")
         
+        idx = int(name_split[2])
+
+        # Skip devices that aren't defined in cell_params (excluded on purpose)
+        if idx not in cell_params:
+            continue
+        
         # Append device name and pixel
         pixel.append('dev'+str(int(name_split[2])+1)+'pix'+str(int(name_split[4])+1))
-        device_name.append(cell_params[int(name_split[2])][1])
+
+        # print(idx, type(cell_params[idx]), cell_params[idx])
+        device_name.append(cell_params[idx][1])
+        # device_name.append(cell_params[int(name_split[2])][1])
 
         # Load data csv
         array = pd.read_csv(os.getcwd()+path+filename)
@@ -130,22 +137,7 @@ def load_data_from_python_into_df(hour_cycle, gap, temperature, path, cell_param
         # Adding a new column for the cycle
         df_array['cycle'] = 0
         
-        # Go through each row to calculate time delta and cycle number
-        # for index,row in df_array.iterrows():
-            
-        #     # Calculate time_delta
-        #     if index == 0:
-        #         time_delta = df_array['time_h'][index]-time0
-        #     else:
-        #         time_delta = df_array['time_h'][index]-df_array['time_h'][index-1]
-            
-        #     # Calculate cycle #
-        #     if time_delta < gap:
-        #         df_array['cycle'][index] = cycle
-        #     else:
-        #         df_array['cycle'][index] = cycle+1
-        #         cycle+=1
-        
+        # Go through each row to calculate time delta and cycle number       
         time_delta = df_array['time_h'].diff()
         time_delta.iloc[0] = df_array['time_h'].iloc[0] - time0  # matches your index==0 case, time0=0
 
@@ -354,287 +346,6 @@ def calculate_area_perCycle_stats(df_all_area):
 # FUNCTIONS: PLOTTING (PART 1) BASIC AREA, MEAN, MAX
 ###############################################################################
 
-# # Plot parameters for various parameters area in different temperatures
-# def plot_area_parameters(df_all_25C_area, df_all_35C_area, df_all_45C_area,
-#                          df_all_55C_area, folder_run_name, type_params):
-    
-#     # Create folder if not exists yet
-#     if not os.path.exists('figures/'+folder_run_name):
-#         os.makedirs('figures/'+folder_run_name)
-    
-#     # Select parameters type to plot
-#     if type_params == 'normal':
-#         param_list_selected = parameter_list
-#     elif type_params == 'loss':
-#         param_list_selected = parameter_loss_list
-#     else:
-#         raise ValueError('Type of parameters isnt correct!')
-    
-    
-#     # Going through each parameter on the parameter list
-#     for parameter in param_list_selected:
-        
-#         # FIRST FIGURE: NOT NORMALIZED
-#         sns.set(rc={'figure.figsize':(7,3)})
-        
-#         plt.figure()
-    
-#         colors=['#fdcc8a','#fc8d59','#e34a33','#b30000']
-    
-#         for index,row in df_all_55C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_55C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_55C_area['area_perCycle'][index][parameter],
-#                                 alpha=0.08, s=15, linewidth=0,
-#                                 color=colors[3])
-            
-#         for index,row in df_all_45C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_45C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_45C_area['area_perCycle'][index][parameter],
-#                                 alpha=0.15, s=15, linewidth=0,
-#                                 color=colors[2])
-            
-#         for index,row in df_all_35C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_35C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_35C_area['area_perCycle'][index][parameter],
-#                                 alpha=0.15, s=15, linewidth=0,
-#                                 color=colors[1])
-        
-#         for index,row in df_all_25C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_25C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_25C_area['area_perCycle'][index][parameter],
-#                                 alpha=0.2, s=15, linewidth=0,
-#                                 color=colors[0])
-        
-#         # Making the figure prettier
-#         plt.rcParams['font.family'] = 'Arial'
-#         # plt.xlabel('cycle')
-#         plt.ylabel(parameter)
-#         # plt.ylim([-0.5,17.5])
-    
-#         plt.tight_layout()
-        
-#         # Saving figure
-#         plt.savefig('figures/'+folder_run_name+'areaParam_allBatches_'+parameter+'.png', dpi=600)
-        
-#         # # Close figure
-#         # plt.close('all')
-        
-#         # SECOND FIGURE: NORMALIZED BASED ON HOUR
-#         sns.set(rc={'figure.figsize':(7,3)})
-        
-#         plt.figure()
-    
-#         colors=['#fdcc8a','#fc8d59','#e34a33','#b30000']
-    
-#         for index,row in df_all_55C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_55C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_55C_area['area_perCycle'][index][parameter]/hour_cycle_55C,
-#                                 alpha=0.08, s=15, linewidth=0,
-#                                 color=colors[3])
-            
-#         for index,row in df_all_45C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_45C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_45C_area['area_perCycle'][index][parameter]/hour_cycle_45C,
-#                                 alpha=0.15, s=15, linewidth=0,
-#                                 color=colors[2])
-            
-#         for index,row in df_all_35C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_35C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_35C_area['area_perCycle'][index][parameter]/hour_cycle_35C,
-#                                 alpha=0.15, s=15, linewidth=0,
-#                                 color=colors[1])
-        
-#         for index,row in df_all_25C_area.iterrows():
-#             g = sns.scatterplot(x=df_all_25C_area['area_perCycle'][index]['cycle'],
-#                                 y=df_all_25C_area['area_perCycle'][index][parameter]/hour_cycle_25C,
-#                                 alpha=0.2, s=15, linewidth=0,
-#                                 color=colors[0])
-        
-#         # Making the figure prettier
-#         plt.rcParams['font.family'] = 'Arial'
-#         # plt.xlabel('cycle')
-#         plt.ylabel(parameter)
-#         # plt.ylim([-0.5,17.5])
-    
-#         plt.tight_layout()
-        
-#         # Saving figure
-#         plt.savefig('figures/'+folder_run_name+'areaParam_allBatches_'+parameter+'_perHour.png', dpi=600)
-        
-#         # # Close figure
-#         # plt.close('all')
-        
-
-# Plot parameters for various parameters area in different temperatures for different batches        
-# def plot_area_parameters_specific_batch(df_all_25C_area, df_all_35C_area, df_all_45C_area,
-#                                         df_all_55C_area, folder_run_name, type_params):
-    
-#     # Create folder if not exists yet
-#     if not os.path.exists('figures/'+folder_run_name):
-#         os.makedirs('figures/'+folder_run_name)
-        
-#     # Select parameters type to plot
-#     if type_params == 'normal':
-#         param_list_selected = parameter_list
-#     elif type_params == 'loss':
-#         param_list_selected = parameter_loss_list
-#     else:
-#         raise ValueError('Type of parameters isnt correct!')
-    
-#     # Go through each batchname
-    
-#     for batch_int in batchname_list:
-        
-#         # Selecting a specific batch
-#         selected_25C = df_all_25C_area[df_all_25C_area['device_name']==batch_int]
-#         selected_35C = df_all_35C_area[df_all_35C_area['device_name']==batch_int]
-#         selected_45C = df_all_45C_area[df_all_45C_area['device_name']==batch_int]
-#         selected_55C = df_all_55C_area[df_all_55C_area['device_name']==batch_int]
-        
-#         # Going through each parameter on the parameter list
-#         for parameter in param_list_selected:
-            
-#             # FIRST FIGURE: NOT NORMALIZED
-#             sns.set(rc={'figure.figsize':(5,3)})
-#             plt.figure()
-#             colors=['#fdcc8a','#fc8d59','#e34a33','#b30000']
-            
-#             for index,row in selected_55C.iterrows():
-#                 g = sns.scatterplot(x=selected_55C['area_perCycle'][index]['cycle'],
-#                                     y=selected_55C['area_perCycle'][index][parameter],
-#                                     alpha=0.08, s=15, linewidth=0,
-#                                     color=colors[3])
-                
-#             for index,row in selected_45C.iterrows():
-#                 g = sns.scatterplot(x=selected_45C['area_perCycle'][index]['cycle'],
-#                                     y=selected_45C['area_perCycle'][index][parameter],
-#                                     alpha=0.15, s=15, linewidth=0,
-#                                     color=colors[2])
-                
-#             for index,row in selected_35C.iterrows():
-#                 g = sns.scatterplot(x=selected_35C['area_perCycle'][index]['cycle'],
-#                                     y=selected_35C['area_perCycle'][index][parameter],
-#                                     alpha=0.15, s=15, linewidth=0,
-#                                     color=colors[1])
-                
-#             for index,row in selected_25C.iterrows():
-#                 g = sns.scatterplot(x=selected_25C['area_perCycle'][index]['cycle'],
-#                                     y=selected_25C['area_perCycle'][index][parameter],
-#                                     alpha=0.15, s=15, linewidth=0,
-#                                     color=colors[0])
-        
-#             # Making the figure prettier
-#             plt.rcParams['font.family'] = 'Arial'
-#             # plt.xlabel('cycle')
-#             plt.ylabel(parameter)
-#             # plt.ylim([-0.5,17.5])
-        
-#             plt.tight_layout()
-            
-#             # Saving figure
-#             plt.savefig('figures/'+folder_run_name+batch_int+'_areaParam_'+parameter+'.png', dpi=600)
-            
-#             # Close figure
-#             plt.close('all')
-            
-#             # SECOND FIGURE: NORMALIZED BASED ON HOUR
-#             # sns.set(rc={'figure.figsize':(7,3)})
-#             sns.set(rc={'figure.figsize':(5,3)})
-#             plt.figure()
-#             colors=['#fdcc8a','#fc8d59','#e34a33','#b30000']
-            
-#             # List for regression slopes
-#             list_slope_55C = []
-#             list_slope_45C = []
-#             list_slope_35C = []
-#             list_slope_25C = []
-            
-#             for index,row in selected_55C.iterrows():
-#                 g = sns.scatterplot(x=selected_55C['area_perCycle'][index]['cycle'],
-#                                     y=selected_55C['area_perCycle'][index][parameter]/hour_cycle_55C,
-#                                     alpha=0.08, s=15, linewidth=0,
-#                                     color=colors[3])
-                
-#                 # Perform linear regression
-#                 slope, intercept, r_value, p_value, std_err = linregress(selected_55C['area_perCycle'][index]['cycle'], 
-#                                                                          selected_55C['area_perCycle'][index][parameter]/hour_cycle_55C)
-#                 list_slope_55C.append(slope)
-                            
-                
-#             for index,row in selected_45C.iterrows():
-#                 g = sns.scatterplot(x=selected_45C['area_perCycle'][index]['cycle'],
-#                                     y=selected_45C['area_perCycle'][index][parameter]/hour_cycle_45C,
-#                                     alpha=0.15, s=15, linewidth=0,
-#                                     color=colors[2])
-                
-#                 # Perform linear regression
-#                 slope, intercept, r_value, p_value, std_err = linregress(selected_45C['area_perCycle'][index]['cycle'], 
-#                                                                          selected_45C['area_perCycle'][index][parameter]/hour_cycle_45C)
-#                 list_slope_45C.append(slope)
-                
-#             for index,row in selected_35C.iterrows():
-#                 g = sns.scatterplot(x=selected_35C['area_perCycle'][index]['cycle'],
-#                                     y=selected_35C['area_perCycle'][index][parameter]/hour_cycle_35C,
-#                                     alpha=0.15, s=15, linewidth=0,
-#                                     color=colors[1])
-                
-#                 # Perform linear regression
-#                 slope, intercept, r_value, p_value, std_err = linregress(selected_35C['area_perCycle'][index]['cycle'], 
-#                                                                          selected_35C['area_perCycle'][index][parameter]/hour_cycle_35C)
-#                 list_slope_35C.append(slope)
-                
-#             for index,row in selected_25C.iterrows():
-#                 g = sns.scatterplot(x=selected_25C['area_perCycle'][index]['cycle'],
-#                                     y=selected_25C['area_perCycle'][index][parameter]/hour_cycle_25C,
-#                                     alpha=0.15, s=15, linewidth=0,
-#                                     color=colors[0])
-                
-#                 # Perform linear regression
-#                 slope, intercept, r_value, p_value, std_err = linregress(selected_25C['area_perCycle'][index]['cycle'], 
-#                                                                          selected_25C['area_perCycle'][index][parameter]/hour_cycle_25C)
-#                 list_slope_25C.append(slope)
-        
-#             # Making the figure prettier
-#             plt.rcParams['font.family'] = 'Arial'
-#             # plt.xlabel('cycle')
-#             plt.ylabel(parameter+'_perHour')
-#             # plt.ylim([-0.5,17.5])
-        
-#             plt.tight_layout()
-            
-#             # Saving figure
-#             plt.savefig('figures/'+folder_run_name+batch_int+'_areaParam_'+parameter+'_perHour.png', dpi=600)
-            
-#             # Close figure
-#             plt.close('all')
-            
-            
-#             # THIRD FIGURE: slope regression results
-            
-#             combined_list_slope = [list_slope_25C, list_slope_35C, list_slope_45C, list_slope_55C]
-            
-#             # sns.set(rc={'figure.figsize':(7,3)})
-#             sns.set(rc={'figure.figsize':(2,3)})
-#             plt.figure()
-#             colors=['#fdcc8a','#fc8d59','#e34a33','#b30000']
-            
-#             # Calculate bin edges based on the combined data
-#             combined_data = np.concatenate(combined_list_slope)
-#             bin_edges = np.histogram_bin_edges(combined_data, bins=12)
-            
-#             # Plot histograms for each list
-#             for i in range(len(combined_list_slope)):
-#                 sns.histplot(y=combined_list_slope[i], bins=bin_edges, color=colors[i], kde=True, label=f'Slope {i + 1}')
-                
-#             plt.tight_layout()
-            
-#             # Saving figure
-#             plt.savefig('figures/'+folder_run_name+batch_int+'_areaParam_'+parameter+'_perHour_slope_histogram.png', dpi=600)
-            
-#             # Close figure
-#             plt.close('all')
-            
-
 # Plot parameters for various parameters area in different temperatures for different batches        
 def plot_area_parameters_specific_batch_no35C(df_all_25C_area, df_all_45C_area,
                                               df_all_55C_area, folder_run_name, type_params):
@@ -804,419 +515,9 @@ def plot_area_parameters_specific_batch_no35C(df_all_25C_area, df_all_45C_area,
             # Close figure
             plt.close('all')
 
-            
-# def plot_area_parameters_stats_specific_batch(df_all_25C_area, df_all_35C_area, df_all_45C_area,
-#                                               df_all_55C_area, folder_run_name):
-    
-#     # Create folder if not exists yet
-#     if not os.path.exists('figures/'+folder_run_name):
-#         os.makedirs('figures/'+folder_run_name)
-        
-    
-#     # Go through each batchname     
-#     for batch_int in batchname_list:
-        
-#         # Selecting a specific batch
-#         selected_25C = df_stats_25C[df_stats_25C['device_name']==batch_int]
-#         selected_35C = df_stats_35C[df_stats_35C['device_name']==batch_int]
-#         selected_45C = df_stats_45C[df_stats_45C['device_name']==batch_int]
-#         selected_55C = df_stats_55C[df_stats_55C['device_name']==batch_int]
-        
-#         # Going through each parameter on the parameter list
-#         count = 0
-        
-#         for parameter in parameter_mean_list:
-#         #     sns.set(rc={'figure.figsize':(7,3)})
-#             plt.figure()
-#             fig, ax = plt.subplots(figsize=(7,3))
-#             colors=['#fdcc8a','#fc8d59','#e34a33','#b30000']
-        
-#             for index,row in selected_25C.iterrows():
-#                 ax.plot(selected_25C['area_perCycle_stats'][index]['cycle'],
-#                         selected_25C['area_perCycle_stats'][index][parameter],
-#                         color = colors[0],
-#                         label = '25C')
-                
-#                 # Calculate lower and upper
-#                 lower = selected_25C['area_perCycle_stats'][index][parameter]-selected_25C['area_perCycle_stats'][index][parameter_std_list[count]]
-#                 upper = selected_25C['area_perCycle_stats'][index][parameter]+selected_25C['area_perCycle_stats'][index][parameter_std_list[count]]
-                
-#                 ax.plot(selected_25C['area_perCycle_stats'][index]['cycle'],lower,color=colors[0],alpha=0.1)
-#                 ax.plot(selected_25C['area_perCycle_stats'][index]['cycle'],upper,color=colors[0],alpha=0.1)
-#                 ax.fill_between(selected_25C['area_perCycle_stats'][index]['cycle'],lower,upper,color=colors[0],alpha=0.4)
-            
-#             for index,row in selected_35C.iterrows():
-#                 ax.plot(selected_35C['area_perCycle_stats'][index]['cycle'],
-#                         selected_35C['area_perCycle_stats'][index][parameter],
-#                         color = colors[1],
-#                         label = '35C')
-                
-#                 # Calculate lower and upper
-#                 lower = selected_35C['area_perCycle_stats'][index][parameter]-selected_35C['area_perCycle_stats'][index][parameter_std_list[count]]
-#                 upper = selected_35C['area_perCycle_stats'][index][parameter]+selected_35C['area_perCycle_stats'][index][parameter_std_list[count]]
-                
-#                 ax.plot(selected_35C['area_perCycle_stats'][index]['cycle'],lower,color=colors[1],alpha=0.1)
-#                 ax.plot(selected_35C['area_perCycle_stats'][index]['cycle'],upper,color=colors[1],alpha=0.1)
-#                 ax.fill_between(selected_35C['area_perCycle_stats'][index]['cycle'],lower,upper,color=colors[1],alpha=0.4)
-            
-#             for index,row in selected_45C.iterrows():
-#                 ax.plot(selected_45C['area_perCycle_stats'][index]['cycle'],
-#                         selected_45C['area_perCycle_stats'][index][parameter],
-#                         color = colors[2],
-#                         label = '45C')
-                
-#                 # Calculate lower and upper
-#                 lower = selected_45C['area_perCycle_stats'][index][parameter]-selected_45C['area_perCycle_stats'][index][parameter_std_list[count]]
-#                 upper = selected_45C['area_perCycle_stats'][index][parameter]+selected_45C['area_perCycle_stats'][index][parameter_std_list[count]]
-                
-#                 ax.plot(selected_45C['area_perCycle_stats'][index]['cycle'],lower,color=colors[2],alpha=0.1)
-#                 ax.plot(selected_45C['area_perCycle_stats'][index]['cycle'],upper,color=colors[2],alpha=0.1)
-#                 ax.fill_between(selected_45C['area_perCycle_stats'][index]['cycle'],lower,upper,color=colors[2],alpha=0.4)
-        
-#             for index,row in selected_55C.iterrows():
-#                 ax.plot(selected_55C['area_perCycle_stats'][index]['cycle'],
-#                         selected_55C['area_perCycle_stats'][index][parameter],
-#                         color = colors[3],
-#                         label = '55C')
-                
-#                 # Calculate lower and upper
-#                 lower = selected_55C['area_perCycle_stats'][index][parameter]-selected_55C['area_perCycle_stats'][index][parameter_std_list[count]]
-#                 upper = selected_55C['area_perCycle_stats'][index][parameter]+selected_55C['area_perCycle_stats'][index][parameter_std_list[count]]
-                
-#                 ax.plot(selected_55C['area_perCycle_stats'][index]['cycle'],lower,color=colors[3],alpha=0.1)
-#                 ax.plot(selected_55C['area_perCycle_stats'][index]['cycle'],upper,color=colors[3],alpha=0.1)
-#                 ax.fill_between(selected_55C['area_perCycle_stats'][index]['cycle'],lower,upper,color=colors[3],alpha=0.4)
-            
-#             count+=1
-#             # Making the figure prettier
-#             plt.rcParams['font.family'] = 'Arial'
-#             plt.xlabel('cycle')
-#             plt.ylabel(parameter)
-#             # plt.ylim([-0.5,17.5])
-        
-#             plt.tight_layout()
-            
-#             # Saving figure
-#             plt.savefig('figures/'+folder_run_name+batch_int+'_areaParam_mean_std_'+parameter+'.png', dpi=600)
-
-#             # # Close figure
-#             # plt.close('all')
-                
-
 ###############################################################################
 # FUNCTIONS: REGRESSION FOR PARAMETERS (sns.regplot) + ARRHENIUS
 ###############################################################################..
-
-# # Go through batch and temperature, and do regression for each of them
-# def calculate_regression_specificT_specificBatch(df_all_25C_area, df_all_35C_area,
-#                                                  df_all_45C_area, df_all_55C_area,
-#                                                  type_reg): # type_reg = 'specific_batch', and 'all_batches'
-    
-#     # Selecting a specific batch based on the type of regression being done
-    
-#     if type_reg == 'specific_batch':
-    
-#         # Go through a specific batch
-#         for batch_int in batchname_list:
-            
-#             selected_25C = df_all_25C_area[df_all_25C_area['device_name']==batch_int]
-#             selected_35C = df_all_35C_area[df_all_35C_area['device_name']==batch_int]
-#             selected_45C = df_all_45C_area[df_all_45C_area['device_name']==batch_int]
-#             selected_55C = df_all_55C_area[df_all_55C_area['device_name']==batch_int]
-            
-#             list_selected = [selected_25C, selected_35C, selected_45C, selected_55C]
-            
-#             dict_temp = {0:'25C',
-#                          1:'35C',
-#                          2:'45C',
-#                          3:'55C'}
-            
-#             counter = 0 # to count for dict_temp
-            
-#             # Go through the temperatures
-#             for selected_temp in list_selected:
-                
-#                 temp_int = dict_temp[counter]
-#                 counter += 1
-                
-#                 # Remake the dataframe
-#                 dummy_df = pd.DataFrame()
-                
-#                 for index,row in selected_temp.iterrows():
-                    
-#                     # Make a concat df
-#                     concat_df = selected_temp['area_perCycle'][index]
-#                     concat_df['device_name'] = selected_temp['device_name'][index]
-#                     concat_df['pixel'] = selected_temp['pixel'][index]
-#                     concat_df['temperature'] = selected_temp['temperature'][index]
-#                     concat_df['hour_cycle'] = selected_temp['hour_cycle'][index]
-                    
-#                     # Concatenate
-#                     dummy_df = pd.concat([dummy_df, concat_df], ignore_index=True)
-                
-#                 # Calculate normalized, per area parameters
-#                 dummy_df['PCEmppArea_perCycle_perHour']=dummy_df['PCEmppArea_perCycle']/dummy_df['hour_cycle']
-#                 dummy_df['VmppArea_perCycle_perHour']=dummy_df['VmppArea_perCycle']/dummy_df['hour_cycle']
-#                 dummy_df['PCEmppAreaLoss_perCycle_perHour']=dummy_df['PCEmppAreaLoss_perCycle']/dummy_df['hour_cycle']
-#                 dummy_df['VmppAreaLoss_perCycle_perHour']=dummy_df['VmppAreaLoss_perCycle']/dummy_df['hour_cycle']
-            
-#                 # Empty list to store results from regressions
-#                 batch_int_list = []
-#                 parameter_int_list = []
-#                 slope1_list = []
-#                 intercept1_list = []
-#                 r1_list = []
-#                 p1_list = []
-#                 sterr1_list = []
-                
-#                 # Plot regression for first 4 parameters
-#                 for i in range(4): # There are 4 parameters
-            
-#                     # New figure
-#                     sns.set(rc={'figure.figsize':(5,3)})
-                    
-#                     plt.figure()
-                    
-#                     # Plot the overview and OLS trendline
-#                     ax = sns.regplot(data=dummy_df, x='cycle',
-#                                     y=(parameter_list[i]+'_perHour'),
-#                                     fit_reg=True,ci = 99,
-#                                     scatter_kws={'alpha':0.2}, # "color": "blue",
-#                                     line_kws={"color": "red"})#,'alpha':0.8})
-                
-#                     plt.setp(ax.collections[1], alpha=0.3)
-                
-#                     #calculate slope and intercept of regression equation
-#                     slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
-#                                                                                 y=ax.get_lines()[0].get_ydata())
-#                     # Append to the lists
-#                     batch_int_list.append(batch_int)
-#                     parameter_int_list.append(parameter_list[i])
-#                     slope1_list.append(slope1)
-#                     intercept1_list.append(intercept1)
-#                     r1_list.append(r1)
-#                     p1_list.append(p1)
-#                     sterr1_list.append(sterr1)
-                    
-                    
-#                     # print('For ',batch_int, ' ',parameter_list[i],'_perHour; slope: ',
-#                     #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
-                
-#                     # Saving figure
-#                     plt.savefig('figures/'+folder_run_name+batch_int+'_'+temp_int+'_'+
-#                                 parameter_list[i]+'_perHour_snsreg.png', dpi=600)
-                    
-#                     # plt.savefig('figures/'+folder_run_name+'areaParam_allBatches_'+parameter+'_perHour.png', dpi=600)
-                    
-                
-#                 # Plot regression for first 4 parameters, go to a different set of parameters (5-8)
-#                 for i in np.arange(4,8,1):
-                    
-#                     # New figure
-#                     sns.set(rc={'figure.figsize':(5,3)})
-                    
-#                     plt.figure()
-                    
-#                     # Plot the overview and OLS trendline
-#                     ax = sns.regplot(data=dummy_df, x='cycle',
-#                                     y=(parameter_list[i]),
-#                                     fit_reg=True,ci = 99,
-#                                     scatter_kws={'alpha':0.2}, # "color": "blue",
-#                                     line_kws={"color": "red"})#,'alpha':0.8})
-                
-#                     plt.setp(ax.collections[1], alpha=0.3)
-                
-#                     #calculate slope and intercept of regression equation
-#                     slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
-#                                                                                 y=ax.get_lines()[0].get_ydata())
-#                     # Append to the lists
-#                     batch_int_list.append(batch_int)
-#                     parameter_int_list.append(parameter_list[i])
-#                     slope1_list.append(slope1)
-#                     intercept1_list.append(intercept1)
-#                     r1_list.append(r1)
-#                     p1_list.append(p1)
-#                     sterr1_list.append(sterr1)
-                    
-#                     # print('For ',batch_int, ' ',parameter_list[i],'; slope: ',
-#                     #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
-                
-#                     # Saving figure
-#                     plt.savefig('figures/'+folder_run_name+batch_int+'_'+temp_int+'_'+
-#                                 parameter_list[i]+'_perHour_snsreg.png', dpi=600)
-                    
-#                     # plt.savefig('figures/20230911_'+batch_int+'_35C_'+parameter_list[i]+'_snsreg.png', dpi=600)
-                
-#                 # Save list as df
-#                 regression_data = {'device_name':batch_int_list,
-#                                    'parameter':parameter_int_list,
-#                                    'reg_slope':slope1_list,
-#                                    'reg_intercept':intercept1_list,
-#                                    'reg_r':r1_list,
-#                                    'reg_p':p1_list,
-#                                    'reg_sterr:':sterr1_list}
-                
-#                 regression_data_df = pd.DataFrame(regression_data)
-                
-#                 # Save df as csv
-#                 regression_data_df.to_csv('figures/'+folder_run_name+batch_int+'_'+
-#                                           temp_int+'_regression_results.csv',
-#                                           index=False)
-                
-#                 # Save dummy_df as csv
-#                 dummy_df.to_csv('figures/'+folder_run_name+batch_int+'_'+
-#                                 temp_int+'_regression_normalized_perArea_parameters.csv',
-#                                 index=False)
-        
-#     elif type_reg == 'all_batches':
-        
-#         selected_25C = df_all_25C_area
-#         selected_35C = df_all_35C_area
-#         selected_45C = df_all_45C_area
-#         selected_55C = df_all_55C_area
-        
-#         list_selected = [selected_25C, selected_35C, selected_45C, selected_55C]
-        
-#         dict_temp = {0:'25C',
-#                      1:'35C',
-#                      2:'45C',
-#                      3:'55C'}
-        
-#         counter = 0 # to count for dict_temp
-        
-#         # Go through the temperatures
-#         for selected_temp in list_selected:
-            
-#             temp_int = dict_temp[counter]
-#             counter += 1
-            
-#             # Remake the dataframe
-#             dummy_df = pd.DataFrame()
-            
-#             for index,row in selected_temp.iterrows():
-                
-#                 # Make a concat df
-#                 concat_df = selected_temp['area_perCycle'][index]
-#                 concat_df['device_name'] = selected_temp['device_name'][index]
-#                 concat_df['pixel'] = selected_temp['pixel'][index]
-#                 concat_df['temperature'] = selected_temp['temperature'][index]
-#                 concat_df['hour_cycle'] = selected_temp['hour_cycle'][index]
-                
-#                 # Concatenate
-#                 dummy_df = pd.concat([dummy_df, concat_df], ignore_index=True)
-            
-#             # Calculate normalized, per area parameters
-#             dummy_df['PCEmppArea_perCycle_perHour']=dummy_df['PCEmppArea_perCycle']/dummy_df['hour_cycle']
-#             dummy_df['VmppArea_perCycle_perHour']=dummy_df['VmppArea_perCycle']/dummy_df['hour_cycle']
-#             dummy_df['PCEmppAreaLoss_perCycle_perHour']=dummy_df['PCEmppAreaLoss_perCycle']/dummy_df['hour_cycle']
-#             dummy_df['VmppAreaLoss_perCycle_perHour']=dummy_df['VmppAreaLoss_perCycle']/dummy_df['hour_cycle']
-        
-#             # Empty list to store results from regressions
-#             parameter_int_list = []
-#             slope1_list = []
-#             intercept1_list = []
-#             r1_list = []
-#             p1_list = []
-#             sterr1_list = []
-            
-#             # Plot regression for first 4 parameters
-#             for i in range(4): # There are 4 parameters
-        
-#                 # New figure
-#                 sns.set(rc={'figure.figsize':(5,3)})
-                
-#                 plt.figure()
-                
-#                 # Plot the overview and OLS trendline
-#                 ax = sns.regplot(data=dummy_df, x='cycle',
-#                                 y=(parameter_list[i]+'_perHour'),
-#                                 fit_reg=True,ci = 99,
-#                                 scatter_kws={'alpha':0.2}, # "color": "blue",
-#                                 line_kws={"color": "red"})#,'alpha':0.8})
-            
-#                 plt.setp(ax.collections[1], alpha=0.3)
-            
-#                 #calculate slope and intercept of regression equation
-#                 slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
-#                                                                             y=ax.get_lines()[0].get_ydata())
-#                 # Append to the lists
-#                 parameter_int_list.append(parameter_list[i])
-#                 slope1_list.append(slope1)
-#                 intercept1_list.append(intercept1)
-#                 r1_list.append(r1)
-#                 p1_list.append(p1)
-#                 sterr1_list.append(sterr1)
-                
-                
-#                 # print('For ',batch_int, ' ',parameter_list[i],'_perHour; slope: ',
-#                 #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
-            
-#                 # Saving figure
-#                 plt.savefig('figures/'+folder_run_name+'_allbatches_'+temp_int+'_'+
-#                             parameter_list[i]+'_perHour_snsreg.png', dpi=600)
-                
-#                 # plt.savefig('figures/'+folder_run_name+'areaParam_allBatches_'+parameter+'_perHour.png', dpi=600)
-                
-            
-#             # Plot regression for first 4 parameters, go to a different set of parameters (5-8)
-#             for i in np.arange(4,8,1):
-                
-#                 # New figure
-#                 sns.set(rc={'figure.figsize':(5,3)})
-                
-#                 plt.figure()
-                
-#                 # Plot the overview and OLS trendline
-#                 ax = sns.regplot(data=dummy_df, x='cycle',
-#                                 y=(parameter_list[i]),
-#                                 fit_reg=True,ci = 99,
-#                                 scatter_kws={'alpha':0.2}, # "color": "blue",
-#                                 line_kws={"color": "red"})#,'alpha':0.8})
-            
-#                 plt.setp(ax.collections[1], alpha=0.3)
-            
-#                 #calculate slope and intercept of regression equation
-#                 slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
-#                                                                             y=ax.get_lines()[0].get_ydata())
-#                 # Append to the lists
-#                 parameter_int_list.append(parameter_list[i])
-#                 slope1_list.append(slope1)
-#                 intercept1_list.append(intercept1)
-#                 r1_list.append(r1)
-#                 p1_list.append(p1)
-#                 sterr1_list.append(sterr1)
-                
-#                 # print('For ',batch_int, ' ',parameter_list[i],'; slope: ',
-#                 #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
-            
-#                 # Saving figure
-#                 plt.savefig('figures/'+folder_run_name+'_allbatches_'+temp_int+'_'+
-#                             parameter_list[i]+'_perHour_snsreg.png', dpi=600)
-                
-#                 # plt.savefig('figures/20230911_'+batch_int+'_35C_'+parameter_list[i]+'_snsreg.png', dpi=600)
-            
-#             # Save list as df
-#             regression_data = {'parameter':parameter_int_list,
-#                                'reg_slope':slope1_list,
-#                                'reg_intercept':intercept1_list,
-#                                'reg_r':r1_list,
-#                                'reg_p':p1_list,
-#                                'reg_sterr:':sterr1_list}
-            
-#             regression_data_df = pd.DataFrame(regression_data)
-            
-#             # Save df as csv
-#             regression_data_df.to_csv('figures/'+folder_run_name+'_allbatches_'+
-#                                       temp_int+'_regression_results.csv',
-#                                       index=False)
-            
-#             # Save dummy_df as csv
-#             dummy_df.to_csv('figures/'+folder_run_name+'_allbatches_'+
-#                             temp_int+'_regression_normalized_perArea_parameters.csv',
-#                             index=False)
-        
-#     else:
-#         raise ValueError('Type of regressions isnt correct!')  
 
 # Go through batch and temperature, and do regression for each of them
 def calculate_regression_specificT_specificBatch_no35C(df_all_25C_area, 
@@ -1536,6 +837,333 @@ def calculate_regression_specificT_specificBatch_no35C(df_all_25C_area,
             # Save dummy_df as csv
             dummy_df.to_csv('figures/'+folder_run_name+'_allbatches_'+
                             temp_int+'_regression_normalized_perArea_parameters_no35C.csv',
+                            index=False)
+        
+    else:
+        raise ValueError('Type of regressions isnt correct!')  
+
+def calculate_regression_specificT_specificBatch_no65C(df_all_25C_area, 
+                                                       df_all_35C_area, 
+                                                       df_all_45C_area, 
+                                                       df_all_55C_area, #df_all_65C_area,
+                                                       type_reg): # type_reg = 'specific_batch', and 'all_batches'
+    
+    # Selecting a specific batch based on the type of regression being done
+    
+    if type_reg == 'specific_batch':
+    
+        # Go through a specific batch
+        for batch_int in batchname_list:
+            
+            selected_25C = df_all_25C_area[df_all_25C_area['device_name']==batch_int]
+            selected_35C = df_all_35C_area[df_all_35C_area['device_name']==batch_int]
+            selected_45C = df_all_45C_area[df_all_45C_area['device_name']==batch_int]
+            selected_55C = df_all_55C_area[df_all_55C_area['device_name']==batch_int]
+            # selected_65C = df_all_65C_area[df_all_65C_area['device_name']==batch_int]
+            
+            list_selected = [selected_25C, selected_35C, selected_45C,selected_55C]
+            
+            # dict_temp = {0:'35C',
+            #              1:'45C',
+            #              2:'55C',
+            #              3:'65C'}
+            
+            dict_temp = {0:'25C',
+                         1:'35C',
+                         2:'45C',
+                         3:'55C',
+                        #  3:'65C',
+                         }
+
+            counter = 0 # to count for dict_temp
+            
+            # Go through the temperatures
+            for selected_temp in list_selected:
+                
+                temp_int = dict_temp[counter]
+                counter += 1
+                
+                # Remake the dataframe
+                dummy_df = pd.DataFrame()
+                
+                for index,row in selected_temp.iterrows():
+                    
+                    # Make a concat df
+                    concat_df = selected_temp['area_perCycle'][index]
+                    concat_df['device_name'] = selected_temp['device_name'][index]
+                    concat_df['pixel'] = selected_temp['pixel'][index]
+                    concat_df['temperature'] = selected_temp['temperature'][index]
+                    concat_df['hour_cycle'] = selected_temp['hour_cycle'][index]
+                    
+                    # Concatenate
+                    dummy_df = pd.concat([dummy_df, concat_df], ignore_index=True)
+                
+                # Calculate normalized, per area parameters
+                dummy_df['PCEmppArea_perCycle_perHour']=dummy_df['PCEmppArea_perCycle']/dummy_df['hour_cycle']
+                dummy_df['VmppArea_perCycle_perHour']=dummy_df['VmppArea_perCycle']/dummy_df['hour_cycle']
+                dummy_df['PCEmppAreaLoss_perCycle_perHour']=dummy_df['PCEmppAreaLoss_perCycle']/dummy_df['hour_cycle']
+                dummy_df['VmppAreaLoss_perCycle_perHour']=dummy_df['VmppAreaLoss_perCycle']/dummy_df['hour_cycle']
+            
+                # Empty list to store results from regressions
+                batch_int_list = []
+                parameter_int_list = []
+                slope1_list = []
+                intercept1_list = []
+                r1_list = []
+                p1_list = []
+                sterr1_list = []
+                
+                # Plot regression for first 4 parameters
+                for i in range(4): # There are 4 parameters
+            
+                    # New figure
+                    sns.set(rc={'figure.figsize':(5,3)})
+                    
+                    plt.figure()
+                    
+                    # Plot the overview and OLS trendline
+                    ax = sns.regplot(data=dummy_df, x='cycle',
+                                    y=(parameter_list[i]+'_perHour'),
+                                    fit_reg=True,ci = 99,
+                                    scatter_kws={'alpha':0.2}, # "color": "blue",
+                                    line_kws={"color": "red"})#,'alpha':0.8})
+                
+                    plt.setp(ax.collections[1], alpha=0.3)
+                
+                    #calculate slope and intercept of regression equation
+                    slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
+                                                                                y=ax.get_lines()[0].get_ydata())
+                    # Append to the lists
+                    batch_int_list.append(batch_int)
+                    parameter_int_list.append(parameter_list[i])
+                    slope1_list.append(slope1)
+                    intercept1_list.append(intercept1)
+                    r1_list.append(r1)
+                    p1_list.append(p1)
+                    sterr1_list.append(sterr1)
+                    
+                    
+                    # print('For ',batch_int, ' ',parameter_list[i],'_perHour; slope: ',
+                    #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
+                
+                    # Saving figure
+                    plt.savefig('figures/'+folder_run_name+batch_int+'_'+temp_int+'_'+
+                                parameter_list[i]+'_perHour_snsreg_no35C.png', dpi=600)
+                    
+                    # plt.savefig('figures/'+folder_run_name+'areaParam_allBatches_'+parameter+'_perHour.png', dpi=600)
+                    
+                
+                # Plot regression for first 4 parameters, go to a different set of parameters (5-8)
+                for i in np.arange(4,8,1):
+                    
+                    # New figure
+                    sns.set(rc={'figure.figsize':(5,3)})
+                    
+                    plt.figure()
+                    
+                    # Plot the overview and OLS trendline
+                    ax = sns.regplot(data=dummy_df, x='cycle',
+                                    y=(parameter_list[i]),
+                                    fit_reg=True,ci = 99,
+                                    scatter_kws={'alpha':0.2}, # "color": "blue",
+                                    line_kws={"color": "red"})#,'alpha':0.8})
+                
+                    plt.setp(ax.collections[1], alpha=0.3)
+                
+                    #calculate slope and intercept of regression equation
+                    slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
+                                                                                y=ax.get_lines()[0].get_ydata())
+                    # Append to the lists
+                    batch_int_list.append(batch_int)
+                    parameter_int_list.append(parameter_list[i])
+                    slope1_list.append(slope1)
+                    intercept1_list.append(intercept1)
+                    r1_list.append(r1)
+                    p1_list.append(p1)
+                    sterr1_list.append(sterr1)
+                    
+                    # print('For ',batch_int, ' ',parameter_list[i],'; slope: ',
+                    #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
+                
+                    # Saving figure
+                    plt.savefig('figures/'+folder_run_name+batch_int+'_'+temp_int+'_'+
+                                parameter_list[i]+'_perHour_snsreg_no35C.png', dpi=600)
+                    
+                    # plt.savefig('figures/20230911_'+batch_int+'_35C_'+parameter_list[i]+'_snsreg.png', dpi=600)
+                
+                # Save list as df
+                regression_data = {'device_name':batch_int_list,
+                                   'parameter':parameter_int_list,
+                                   'reg_slope':slope1_list,
+                                   'reg_intercept':intercept1_list,
+                                   'reg_r':r1_list,
+                                   'reg_p':p1_list,
+                                   'reg_sterr:':sterr1_list}
+                
+                regression_data_df = pd.DataFrame(regression_data)
+                
+                # Save df as csv
+                regression_data_df.to_csv('figures/'+folder_run_name+batch_int+'_'+
+                                          temp_int+'_regression_results_no35C.csv',
+                                          index=False)
+                
+                # Save dummy_df as csv
+                dummy_df.to_csv('figures/'+folder_run_name+batch_int+'_'+
+                                temp_int+'_regression_normalized_perArea_parameters_no35C.csv',
+                                index=False)
+        
+    elif type_reg == 'all_batches':
+        
+        selected_25C = df_all_25C_area
+        selected_35C = df_all_35C_area
+        selected_45C = df_all_45C_area
+        selected_55C = df_all_55C_area
+        # selected_65C = df_all_65C_area
+        
+        list_selected = [selected_25C, 
+                         selected_35C, 
+                         selected_45C, selected_55C, 
+                        #  selected_65C,
+                         ]
+        
+        dict_temp = {0:'25C',
+                     1:'35C',
+                     2:'45C',
+                     3:'55C',
+                    #  3:'65C',
+                     }
+        
+        counter = 0 # to count for dict_temp
+        
+        # Go through the temperatures
+        for selected_temp in list_selected:
+            
+            temp_int = dict_temp[counter]
+            counter += 1
+            
+            # Remake the dataframe
+            dummy_df = pd.DataFrame()
+            
+            for index,row in selected_temp.iterrows():
+                
+                # Make a concat df
+                concat_df = selected_temp['area_perCycle'][index]
+                concat_df['device_name'] = selected_temp['device_name'][index]
+                concat_df['pixel'] = selected_temp['pixel'][index]
+                concat_df['temperature'] = selected_temp['temperature'][index]
+                concat_df['hour_cycle'] = selected_temp['hour_cycle'][index]
+                
+                # Concatenate
+                dummy_df = pd.concat([dummy_df, concat_df], ignore_index=True)
+            
+            # Calculate normalized, per area parameters
+            dummy_df['PCEmppArea_perCycle_perHour']=dummy_df['PCEmppArea_perCycle']/dummy_df['hour_cycle']
+            dummy_df['VmppArea_perCycle_perHour']=dummy_df['VmppArea_perCycle']/dummy_df['hour_cycle']
+            dummy_df['PCEmppAreaLoss_perCycle_perHour']=dummy_df['PCEmppAreaLoss_perCycle']/dummy_df['hour_cycle']
+            dummy_df['VmppAreaLoss_perCycle_perHour']=dummy_df['VmppAreaLoss_perCycle']/dummy_df['hour_cycle']
+        
+            # Empty list to store results from regressions
+            parameter_int_list = []
+            slope1_list = []
+            intercept1_list = []
+            r1_list = []
+            p1_list = []
+            sterr1_list = []
+            
+            # Plot regression for first 4 parameters
+            for i in range(4): # There are 4 parameters
+        
+                # New figure
+                sns.set(rc={'figure.figsize':(5,3)})
+                
+                plt.figure()
+                
+                # Plot the overview and OLS trendline
+                ax = sns.regplot(data=dummy_df, x='cycle',
+                                y=(parameter_list[i]+'_perHour'),
+                                fit_reg=True,ci = 99,
+                                scatter_kws={'alpha':0.2}, # "color": "blue",
+                                line_kws={"color": "red"})#,'alpha':0.8})
+            
+                plt.setp(ax.collections[1], alpha=0.3)
+            
+                #calculate slope and intercept of regression equation
+                slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
+                                                                            y=ax.get_lines()[0].get_ydata())
+                # Append to the lists
+                parameter_int_list.append(parameter_list[i])
+                slope1_list.append(slope1)
+                intercept1_list.append(intercept1)
+                r1_list.append(r1)
+                p1_list.append(p1)
+                sterr1_list.append(sterr1)
+                
+                
+                # print('For ',batch_int, ' ',parameter_list[i],'_perHour; slope: ',
+                #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
+            
+                # Saving figure
+                plt.savefig('figures/'+folder_run_name+'_allbatches_'+temp_int+'_'+
+                            parameter_list[i]+'_perHour_snsreg_no65C.png', dpi=600)
+                
+                # plt.savefig('figures/'+folder_run_name+'areaParam_allBatches_'+parameter+'_perHour.png', dpi=600)
+                
+            
+            # Plot regression for first 4 parameters, go to a different set of parameters (5-8)
+            for i in np.arange(4,8,1):
+                
+                # New figure
+                sns.set(rc={'figure.figsize':(5,3)})
+                
+                plt.figure()
+                
+                # Plot the overview and OLS trendline
+                ax = sns.regplot(data=dummy_df, x='cycle',
+                                y=(parameter_list[i]),
+                                fit_reg=True,ci = 99,
+                                scatter_kws={'alpha':0.2}, # "color": "blue",
+                                line_kws={"color": "red"})#,'alpha':0.8})
+            
+                plt.setp(ax.collections[1], alpha=0.3)
+            
+                #calculate slope and intercept of regression equation
+                slope1, intercept1, r1, p1, sterr1 = scipy.stats.linregress(x=ax.get_lines()[0].get_xdata(),
+                                                                            y=ax.get_lines()[0].get_ydata())
+                # Append to the lists
+                parameter_int_list.append(parameter_list[i])
+                slope1_list.append(slope1)
+                intercept1_list.append(intercept1)
+                r1_list.append(r1)
+                p1_list.append(p1)
+                sterr1_list.append(sterr1)
+                
+                # print('For ',batch_int, ' ',parameter_list[i],'; slope: ',
+                #       slope1,', intercept: ', intercept1)#,', p1: ', r1)
+            
+                # Saving figure
+                plt.savefig('figures/'+folder_run_name+'_allbatches_'+temp_int+'_'+
+                            parameter_list[i]+'_perHour_snsreg_no65C.png', dpi=600)
+                
+                # plt.savefig('figures/20230911_'+batch_int+'_35C_'+parameter_list[i]+'_snsreg.png', dpi=600)
+            
+            # Save list as df
+            regression_data = {'parameter':parameter_int_list,
+                               'reg_slope':slope1_list,
+                               'reg_intercept':intercept1_list,
+                               'reg_r':r1_list,
+                               'reg_p':p1_list,
+                               'reg_sterr:':sterr1_list}
+            
+            regression_data_df = pd.DataFrame(regression_data)
+            
+            # Save df as csv
+            regression_data_df.to_csv('figures/'+folder_run_name+'_allbatches_'+
+                                      temp_int+'_regression_results_no65C.csv',
+                                      index=False)
+            
+            # Save dummy_df as csv
+            dummy_df.to_csv('figures/'+folder_run_name+'_allbatches_'+
+                            temp_int+'_regression_normalized_perArea_parameters_no65C.csv',
                             index=False)
         
     else:
@@ -3001,346 +2629,6 @@ def fit_all_cycles(df_median_45C, temperature, batch_name):
                             str(temperature)+'_cycle_'+str(cycle)+'.csv',index=False)
 
     return df_fitting_cycle
-    
-    
-###############################################################################
-# FUNCTIONS: BACK-CALCULATE FOR EQUIVALENT OF 45C IN 55C, ETC.
-###############################################################################
-
-# Back calculate
-
-# def calculate_equivalent_time(df_fitting_cycle_45, df_fitting_cycle_55,
-#                               temp_target, temp_base,
-#                               batch_name,desired_foldername): # Find equivalent in 45C, base 55C
-
-#     # Create folder if not exists yet
-#     if not os.path.exists('figures/'+folder_run_name+desired_foldername):
-#         os.makedirs('figures/'+folder_run_name+desired_foldername)
-
-#     unique_45C_cycle = df_fitting_cycle_45['cycle'].unique()
-#     unique_55C_cycle = df_fitting_cycle_55['cycle'].unique()
-    
-#     # Find the length of the base
-#     # if (temp_base == 45) and (temp_target == 55):
-#     #     desired_length_base = 1.5 # 55C
-#     # elif (temp_base == 55) and (temp_target == 45):
-#     #     desired_length_base = 3 # 45C
-#     # elif temp_base == 35: 
-#     #     desired_length_base = 3 # 45C
-    
-#     if (temp_target == 55):
-#         desired_length_base = 1.5 # 55C
-#     elif (temp_target == 45):
-#         desired_length_base = 3 # 45C
-#     elif (temp_target == 35): 
-#         desired_length_base = 6 # 45C
-    
-
-#     list_equivalent_45_time_log = []
-#     list_equivalent_45_time_log_linear = []
-#     list_equivalent_45_time_power = []
-#     list_equivalent_45_time_exp = []
-#     list_equivalent_45_time_exp_linear = []
-#     list_equivalent_45_time_tanh = []
-
-#     list_equivalent_45_diffArea_log = []
-#     list_equivalent_45_diffArea_log_linear = []
-#     list_equivalent_45_diffArea_power = []
-#     list_equivalent_45_diffArea_exp = []
-#     list_equivalent_45_diffArea_exp_linear = []
-#     list_equivalent_45_diffArea_tanh = []
-    
-#     # Create a new list containing elements present in both lists (unique cycles)
-#     common_cycle = [x for x in unique_45C_cycle if x in unique_55C_cycle]
-    
-
-#     # Go through each cycle
-#     for cycle in unique_45C_cycle:
-        
-#         # If cycle is not on the common cycle:
-#         if cycle not in common_cycle:
-            
-#             # Save the values
-#             list_equivalent_45_time_log.append(np.nan)
-#             list_equivalent_45_diffArea_log.append(np.nan)
-            
-#             list_equivalent_45_time_log_linear.append(np.nan)
-#             list_equivalent_45_diffArea_log_linear.append(np.nan)
-            
-#             list_equivalent_45_time_power.append(np.nan)
-#             list_equivalent_45_diffArea_power.append(np.nan)
-            
-#             list_equivalent_45_time_exp.append(np.nan)
-#             list_equivalent_45_diffArea_exp.append(np.nan)
-            
-#             list_equivalent_45_time_exp_linear.append(np.nan)
-#             list_equivalent_45_diffArea_exp_linear.append(np.nan)
-            
-#             list_equivalent_45_time_tanh.append(np.nan)
-#             list_equivalent_45_diffArea_tanh.append(np.nan)
-        
-#         # If cycle is common:
-#         elif cycle in common_cycle: 
-#             ### LOG
-#             # Parameters of the logarithmic function (replace with your values)
-#             a_55_log = df_fitting_cycle_55['a_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_log = df_fitting_cycle_55['b_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_log = df_fitting_cycle_55['c_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_log = df_fitting_cycle_45['a_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_log = df_fitting_cycle_45['b_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_log = df_fitting_cycle_45['c_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 log (target), based on the base 55C
-#             desired_area_45_log = integral_logarithmic_func(desired_length_base, a_55_log, b_55_log, c_55_log)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' log
-#             result_log = minimize_scalar(area_difference_log, args=(desired_area_45_log, a_45_log, b_45_log, c_45_log), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_log = result_log.x
-
-#             # Desired area for 55
-#             area_45_log = integral_logarithmic_func(x_value_log, a_45_log, b_45_log, c_45_log)
-#             diff_45_log = area_45_log-desired_area_45_log
-
-#             # Save the values
-#             list_equivalent_45_time_log.append(x_value_log)
-#             list_equivalent_45_diffArea_log.append(diff_45_log)
-
-#             ### LOG + LINEAR
-#             # Parameters of the logarithmic function (replace with your values)
-#             a_55_log_linear = df_fitting_cycle_55['a_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_log_linear = df_fitting_cycle_55['b_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_log_linear = df_fitting_cycle_55['c_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             d_55_log_linear = df_fitting_cycle_55['d_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_log_linear = df_fitting_cycle_45['a_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_log_linear = df_fitting_cycle_45['b_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_log_linear = df_fitting_cycle_45['c_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             d_45_log_linear = df_fitting_cycle_45['d_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 log
-#             desired_area_45_log_linear = integral_logarithmic_linear_func(desired_length_base, a_55_log_linear, b_55_log_linear, c_55_log_linear, d_55_log_linear)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' log
-#             result_log_linear = minimize_scalar(area_difference_log_linear, args=(desired_area_45_log_linear, 
-#                                                                                   a_45_log_linear, b_45_log_linear,
-#                                                                                   c_45_log_linear, d_45_log_linear), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_log_linear = result_log_linear.x
-
-#             # Desired area for 55
-#             area_45_log_linear = integral_logarithmic_linear_func(x_value_log_linear, a_45_log_linear, b_45_log_linear, c_45_log_linear, d_45_log_linear)
-#             diff_45_log_linear = area_45_log_linear-desired_area_45_log_linear
-
-#             # Save the values
-#             list_equivalent_45_time_log_linear.append(x_value_log_linear)
-#             list_equivalent_45_diffArea_log_linear.append(diff_45_log_linear)
-
-#             ### POWER
-#             # Parameters of the power function (replace with your values)
-#             a_55_power = df_fitting_cycle_55['a_fit_power'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_power = df_fitting_cycle_55['b_fit_power'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_power = df_fitting_cycle_45['a_fit_power'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_power = df_fitting_cycle_45['b_fit_power'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 power
-#             desired_area_45_power = integral_power_func(desired_length_base, a_55_power, b_55_power)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' power
-#             result_power = minimize_scalar(area_difference_power, args=(desired_area_45_power, a_45_power, b_45_power), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_power = result_power.x
-
-#             # Desired area for 55
-#             area_45_power = integral_power_func(x_value_power, a_45_power, b_45_power)
-#             diff_45_power = area_45_power-desired_area_45_power
-
-#             # Save the values
-#             list_equivalent_45_time_power.append(x_value_power)
-#             list_equivalent_45_diffArea_power.append(diff_45_power)
-
-#             ### EXP
-#             # Parameters of the exp function (replace with your values)
-#             a_55_exp = df_fitting_cycle_55['a_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_exp = df_fitting_cycle_55['b_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_exp = df_fitting_cycle_55['c_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_exp = df_fitting_cycle_45['a_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_exp = df_fitting_cycle_45['b_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_exp = df_fitting_cycle_45['c_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 exp
-#             desired_area_45_exp = integral_exp_func(desired_length_base, a_55_exp, b_55_exp, c_55_exp)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' exp
-#             result_exp = minimize_scalar(area_difference_exp, args=(desired_area_45_exp, a_45_exp, b_45_exp, c_45_exp), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_exp = result_exp.x
-
-#             # Desired area for 55
-#             area_45_exp = integral_exp_func(x_value_exp, a_45_exp, b_45_exp, c_45_exp)
-#             diff_45_exp = area_45_exp-desired_area_45_exp
-
-#             # Save the values
-#             list_equivalent_45_time_exp.append(x_value_exp)
-#             list_equivalent_45_diffArea_exp.append(diff_45_exp)
-
-#             ### EXP + LINEAR
-#             # Parameters of the exp function (replace with your values)
-#             a_55_exp_linear = df_fitting_cycle_55['a_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_exp_linear = df_fitting_cycle_55['b_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_exp_linear = df_fitting_cycle_55['c_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             d_55_exp_linear = df_fitting_cycle_55['d_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_exp_linear = df_fitting_cycle_45['a_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_exp_linear = df_fitting_cycle_45['b_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_exp_linear = df_fitting_cycle_45['c_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             d_45_exp_linear = df_fitting_cycle_45['d_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 exp
-#             desired_area_45_exp_linear = integral_exp_linear_func(desired_length_base, a_55_exp_linear, b_55_exp_linear, c_55_exp_linear, d_55_exp_linear)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' exp
-#             result_exp_linear = minimize_scalar(area_difference_exp_linear, args=(desired_area_45_exp_linear, a_45_exp_linear,
-#                                                                                   b_45_exp_linear, c_45_exp_linear,
-#                                                                                   d_45_exp_linear), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_exp_linear = result_exp_linear.x
-
-#             # Desired area for 55
-#             area_45_exp_linear = integral_exp_linear_func(x_value_exp_linear, a_45_exp_linear, b_45_exp_linear, c_45_exp_linear, d_45_exp_linear)
-#             diff_45_exp_linear = area_45_exp_linear-desired_area_45_exp_linear
-
-#             # Save the values
-#             list_equivalent_45_time_exp_linear.append(x_value_exp_linear)
-#             list_equivalent_45_diffArea_exp_linear.append(diff_45_exp_linear)
-            
-#             ### TANH
-#             # Parameters of the tanh function (replace with your values)
-#             a_55_tanh = df_fitting_cycle_55['a_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_tanh = df_fitting_cycle_55['b_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_tanh = df_fitting_cycle_55['c_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_tanh = df_fitting_cycle_45['a_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_tanh = df_fitting_cycle_45['b_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_tanh = df_fitting_cycle_45['c_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 tanh
-#             desired_area_45_tanh = integral_tanh_func(desired_length_base, a_55_tanh, b_55_tanh, c_55_tanh)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' tanh
-#             result_tanh = minimize_scalar(area_difference_tanh, args=(desired_area_45_tanh, a_45_tanh, b_45_tanh, c_45_tanh), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_tanh = result_tanh.x
-
-#             # Desired area for 55
-#             area_45_tanh = integral_exp_func(x_value_tanh, a_45_tanh, b_45_tanh, c_45_tanh)
-#             diff_45_tanh = area_45_tanh-desired_area_45_tanh
-
-#             # Save the values
-#             list_equivalent_45_time_tanh.append(x_value_tanh)
-#             list_equivalent_45_diffArea_tanh.append(diff_45_tanh)
-    
-#     # Prepare for the column name
-#     str_eq = 'eq_'+str(temp_target)+'C_wrt_'+str(temp_base)+'C_'
-#     str_eq_time = str_eq + 'time_'
-#     str_eq_diffArea = str_eq + 'diffArea_'
-#     list_func = ['log','linear_log','power','exp','linear_exp','tanh']
-    
-#     str_time_all = [elem1 + elem2 for elem1, elem2 in zip([str_eq_time]*6, list_func)]
-#     str_diffArea_all = [elem1 + elem2 for elem1, elem2 in zip([str_eq_diffArea]*6, list_func)]
-#     str_all = str_time_all+ str_diffArea_all
-
-#     # Add to the df
-#     df_fitting_cycle_45[str_all[0]] = list_equivalent_45_time_log
-#     df_fitting_cycle_45[str_all[1]] = list_equivalent_45_time_log_linear
-#     df_fitting_cycle_45[str_all[2]] = list_equivalent_45_time_power
-#     df_fitting_cycle_45[str_all[3]] = list_equivalent_45_time_exp
-#     df_fitting_cycle_45[str_all[4]] = list_equivalent_45_time_exp_linear
-#     df_fitting_cycle_45[str_all[5]] = list_equivalent_45_time_tanh
-
-#     df_fitting_cycle_45[str_all[4]] = list_equivalent_45_diffArea_log
-#     df_fitting_cycle_45[str_all[5]] = list_equivalent_45_diffArea_log_linear
-#     df_fitting_cycle_45[str_all[6]] = list_equivalent_45_diffArea_power
-#     df_fitting_cycle_45[str_all[7]] = list_equivalent_45_diffArea_exp
-#     df_fitting_cycle_45[str_all[8]] = list_equivalent_45_diffArea_exp_linear
-#     df_fitting_cycle_45[str_all[9]] = list_equivalent_45_diffArea_tanh
-    
-#     # Save the dataframe
-#     df_fitting_cycle_45.to_csv('figures/'+folder_run_name+desired_foldername+'fitting log_'+
-#                                batch_name+"_eq_Ttarget_"+str(temp_target)+'C_wrt_Tbase_'+
-#                                str(temp_base)+'_cycle_'+str(cycle)+'.csv',index=False)
-    
-#     ### PLOT
-#     str_eq = str(temp_target)+'C wrt '+str(temp_base)+'C'
-#     x_data = df_fitting_cycle_45['cycle']
-#     y_data_log = df_fitting_cycle_45.filter(like='_time_log').iloc[:,0]
-#     y_data_log_linear = df_fitting_cycle_45.filter(like='_time_linear_log').iloc[:,0]
-#     y_data_power = df_fitting_cycle_45.filter(like='_time_power').iloc[:,0]
-#     y_data_exp = df_fitting_cycle_45.filter(like='_time_exp').iloc[:,0]
-#     y_data_exp_linear = df_fitting_cycle_45.filter(like='_time_linear_exp').iloc[:,0]
-#     y_data_tanh = df_fitting_cycle_45.filter(like='_time_tanh').iloc[:,0]
-
-#     # Create a 2 by 2 subplot and plot the original data and the fitted curve for each function
-#     plt.close()
-#     plt.figure(figsize=(15, 8))
-
-#     # Subplot 1: Natural Logarithm
-#     plt.subplot(2, 3, 1)
-#     sns.scatterplot(x=x_data, y=y_data_log, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 2: Natural Logarithm + Linear
-#     plt.subplot(2, 3, 2)
-#     sns.scatterplot(x=x_data, y=y_data_log_linear, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic linear fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     # Subplot 3: Power Function
-#     plt.subplot(2, 3, 3)
-#     sns.scatterplot(x=x_data, y=y_data_power, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Power fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 4: Exponential Decay Upward
-#     plt.subplot(2, 3, 4)
-#     sns.scatterplot(x=x_data, y=y_data_exp, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 5: Exponential Decay Upward + Linear
-#     plt.subplot(2, 3, 5)
-#     sns.scatterplot(x=x_data, y=y_data_exp_linear, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward linear fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     # Subplot 6: Hyperbolic Tangent (tanh)
-#     plt.subplot(2, 3, 6)
-#     sns.scatterplot(x=x_data, y=y_data_tanh, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Tanh fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     plt.tight_layout()
-
-#     # plt.show()
-    
-#     # Name txt file
-#     file_name_txt = 'figures/'+folder_run_name+desired_foldername+'recap_'+batch_name+'_'+str_eq+'.txt'
-    
-#     # Store the results
-#     with open(file_name_txt, "w") as file:        
-
-#         file.write(f"{batch_name}, target:{temp_target}C, base: {temp_base}C ")
-#         file.write(f'Median log: {y_data_log.median()} ')
-#         file.write(f'Median log linear: {y_data_log_linear.median()} ')
-#         file.write(f'Median exp: {y_data_exp.median()} ')
-#         file.write(f'Median exp linear: {y_data_exp_linear.median()} ')
-#         file.write(f'Median power: {y_data_power.median()} ')
-#         file.write(f'Median tanh: {y_data_tanh.median()} ')
-
-#     # Save the figure in the "figures/curve_fitting" folder
-#     plt.savefig('figures/'+folder_run_name+desired_foldername+batch_name+"_"+str_eq+".png",
-#                 dpi=200)
-
-#     return df_fitting_cycle_45
-
 
 ###############################################################################
 # FUNCTIONS: BACK-CALCULATE FOR EQUIVALENT OF 45C IN 55C, ETC. NOT NORMALIZED
@@ -3470,7 +2758,7 @@ def fit_all_cycles_notNorm(df_median_45C, temperature, batch_name):
     list_r_squared_tanh = []
     
     # If temperature == 55 remove certain cycle and certain batch
-    if (temperature ==55) & (batch_name=='Zahra-Batch1'):
+    if (temperature ==55) & (batch_name=='NiOx-SAM'): #'Zahra-Batch1'
         
         # List of values to be dropped
         values_to_drop = [344, 345, 346,]
@@ -3484,7 +2772,7 @@ def fit_all_cycles_notNorm(df_median_45C, temperature, batch_name):
         # Filter the array using the mask
         unique_45C_cycle = unique_45C_cycle[mask]
         
-    elif (temperature ==35) & (batch_name=='Zahra-Batch1'):
+    elif (temperature ==35) & (batch_name=='NiOx-SAM'):#'Zahra-Batch1'):
         
         # List of values to be dropped
         # values_to_drop = [2,3,4,5,6,8,9,13,14,17,21,22,24,33,41,42,63,67,78,
@@ -3499,7 +2787,7 @@ def fit_all_cycles_notNorm(df_median_45C, temperature, batch_name):
         # Filter the array using the mask
         unique_45C_cycle = unique_45C_cycle[mask]
         
-    elif (temperature ==45) & (batch_name=='Zahra-Batch1'):
+    elif (temperature ==45) & (batch_name=='NiOx-SAM'):#'Zahra-Batch1'):
         
         # List of values to be dropped
         # values_to_drop = [2,3,4,5,6,8,9,13,14,17,21,22,24,33,41,42,63,67,78,
@@ -3883,950 +3171,6 @@ def fit_all_cycles_notNorm(df_median_45C, temperature, batch_name):
 
     return df_fitting_cycle
 
-# def calculate_equivalent_time_using_actual_data(df_fitting_cycle_45, 
-#                                                 df_fitting_cycle_55,
-#                                                 temp_target,
-#                                                 temp_base,
-#                                                 df_calculated_area_45C, 
-#                                                 df_calculated_area_55C,
-#                                                 batch_name,
-#                                                 desired_foldername): # Find equivalent in 45C
-    
-# #     (df_calculated_area_45C['PCEmppArea_median_perHour'])[df_calculated_area_45C['cycle']==1].values[0]
-    
-#     unique_45C_cycle = df_fitting_cycle_45['cycle'].unique()
-#     unique_55C_cycle = df_fitting_cycle_55['cycle'].unique()
-    
-#     # Create folder if not exists yet
-#     if not os.path.exists('figures/'+folder_run_name+desired_foldername):
-#         os.makedirs('figures/'+folder_run_name+desired_foldername)
-
-#     unique_45C_cycle = df_fitting_cycle_45['cycle'].unique()
-#     unique_55C_cycle = df_fitting_cycle_55['cycle'].unique()
-    
-#     # Find the length of the base
-#     # if (temp_base == 45) and (temp_target == 55):
-#     #     desired_length_base = 1.5 # 55C
-#     # elif (temp_base == 55) and (temp_target == 45):
-#     #     desired_length_base = 3 # 45C
-#     # elif temp_base == 35: 
-#     #     desired_length_base = 3 # 45C
-    
-#     if (temp_target == 55):
-#         desired_length_base = 1.5 # 55C
-#     elif (temp_target == 45):
-#         desired_length_base = 3 # 45C
-#     elif (temp_target == 35): 
-#         desired_length_base = 6 # 45C
-
-#     list_equivalent_45_time_log = []
-#     list_equivalent_45_time_log_linear = []
-#     list_equivalent_45_time_power = []
-#     list_equivalent_45_time_exp = []
-#     list_equivalent_45_time_exp_linear = []
-#     list_equivalent_45_time_tanh = []
-
-#     list_equivalent_45_diffArea_log = []
-#     list_equivalent_45_diffArea_log_linear = []
-#     list_equivalent_45_diffArea_power = []
-#     list_equivalent_45_diffArea_exp = []
-#     list_equivalent_45_diffArea_exp_linear = []
-#     list_equivalent_45_diffArea_tanh = []
-    
-#     list_equivalent_45_timeLength_target = []
-    
-#     # Create a new list containing elements present in both lists (unique cycles)
-#     common_cycle = [x for x in unique_45C_cycle if x in unique_55C_cycle]
-
-#     # Go through each cycle
-#     for cycle in unique_45C_cycle:
-        
-#         # If cycle is not on the common cycle:
-#         if cycle not in common_cycle:
-            
-#             # Save the values
-#             list_equivalent_45_time_log.append(np.nan)
-#             list_equivalent_45_diffArea_log.append(np.nan)
-            
-#             list_equivalent_45_time_log_linear.append(np.nan)
-#             list_equivalent_45_diffArea_log_linear.append(np.nan)
-            
-#             list_equivalent_45_time_power.append(np.nan)
-#             list_equivalent_45_diffArea_power.append(np.nan)
-            
-#             list_equivalent_45_time_exp.append(np.nan)
-#             list_equivalent_45_diffArea_exp.append(np.nan)
-            
-#             list_equivalent_45_time_exp_linear.append(np.nan)
-#             list_equivalent_45_diffArea_exp_linear.append(np.nan)
-            
-#             list_equivalent_45_time_tanh.append(np.nan)
-#             list_equivalent_45_diffArea_tanh.append(np.nan)
-            
-#             list_equivalent_45_timeLength_target.append(np.nan)
-        
-#         # If cycle is common:
-#         elif cycle in common_cycle:
-            
-#             ### DESIRED AREA CALCULATION
-#             desired_area_45 = (df_calculated_area_55C['PCEmppArea_median_perHour'])[df_calculated_area_55C['cycle']==cycle].values[0]
-#             actual_area_45 = (df_calculated_area_45C['PCEmppArea_median_perHour'])[df_calculated_area_45C['cycle']==cycle].values[0]
-            
-#             # Actual time length of the target
-#             actual_time_length_45 = (df_calculated_area_45C['length_hour_perCycle'])[df_calculated_area_45C['cycle']==cycle].values[0]
-#             list_equivalent_45_timeLength_target.append(actual_time_length_45)
-            
-#             ### LOG
-#             # Parameters of the logarithmic function (replace with your values)
-#             a_55_log = df_fitting_cycle_55['a_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_log = df_fitting_cycle_55['b_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_log = df_fitting_cycle_55['c_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_log = df_fitting_cycle_45['a_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_log = df_fitting_cycle_45['b_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_log = df_fitting_cycle_45['c_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 log
-# #             desired_area_45_log = integral_logarithmic_func(desired_length_base, a_55_log, b_55_log, c_55_log)#logarithmic_func(x_55,a_55,b_55,c_55)
-            
-#             # Calculate the value of 'x' log
-#             result_log = minimize_scalar(area_difference_log, args=(desired_area_45, a_45_log, b_45_log, c_45_log), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_log = result_log.x
-
-#             # Desired area for 55
-#             area_45_log = integral_logarithmic_func(x_value_log, a_45_log, b_45_log, c_45_log)
-#             diff_45_log = area_45_log-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_log.append(x_value_log)
-#             list_equivalent_45_diffArea_log.append(diff_45_log)
-
-#         #     print("LOG")
-#         #     print("LOG: Solution for x from equation:", x_value_log)
-#         #     print("LOG: Area calculated from the x: ", area_45_log)
-#         #     print("LOG: The difference: ", diff_45_log)
-
-#             ### LOG + LINEAR
-#             # Parameters of the logarithmic function (replace with your values)
-#             a_55_log_linear = df_fitting_cycle_55['a_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_log_linear = df_fitting_cycle_55['b_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_log_linear = df_fitting_cycle_55['c_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             d_55_log_linear = df_fitting_cycle_55['d_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_log_linear = df_fitting_cycle_45['a_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_log_linear = df_fitting_cycle_45['b_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_log_linear = df_fitting_cycle_45['c_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             d_45_log_linear = df_fitting_cycle_45['d_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 log
-# #             desired_area_45_log = integral_logarithmic_func(desired_length_base, a_55_log, b_55_log, c_55_log)#logarithmic_func(x_55,a_55,b_55,c_55)
-            
-#             # Calculate the value of 'x' log
-#             result_log_linear = minimize_scalar(area_difference_log_linear, args=(desired_area_45, a_45_log_linear, 
-#                                                                                   b_45_log_linear, c_45_log_linear,
-#                                                                                   d_45_log_linear), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_log_linear = result_log_linear.x
-
-#             # Desired area for 55
-#             area_45_log_linear = integral_logarithmic_linear_func(x_value_log_linear, a_45_log_linear, 
-#                                                                   b_45_log_linear, c_45_log_linear, d_45_log_linear)
-#             diff_45_log_linear = area_45_log_linear-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_log_linear.append(x_value_log_linear)
-#             list_equivalent_45_diffArea_log_linear.append(diff_45_log_linear)
-
-
-#             ### POWER
-#             # Parameters of the power function (replace with your values)
-#             a_55_power = df_fitting_cycle_55['a_fit_power'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_power = df_fitting_cycle_55['b_fit_power'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_power = df_fitting_cycle_45['a_fit_power'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_power = df_fitting_cycle_45['b_fit_power'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 power
-# #             desired_area_45_power = integral_power_func(desired_length_base, a_55_power, b_55_power)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' power
-#             result_power = minimize_scalar(area_difference_power, args=(desired_area_45, a_45_power, b_45_power), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_power = result_power.x
-
-#             # Desired area for 55
-#             area_45_power = integral_power_func(x_value_power, a_45_power, b_45_power)
-#             diff_45_power = area_45_power-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_power.append(x_value_power)
-#             list_equivalent_45_diffArea_power.append(diff_45_power)
-
-#         #     print("POWER")
-#         #     print("POWER: Solution for x from equation:", x_value_power)
-#         #     print("POWER: Area calculated from the x: ", area_45_power)
-#         #     print("POWER: The difference: ", diff_45_power)
-
-#             ### EXP
-#             # Parameters of the exp function (replace with your values)
-#             a_55_exp = df_fitting_cycle_55['a_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_exp = df_fitting_cycle_55['b_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_exp = df_fitting_cycle_55['c_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_exp = df_fitting_cycle_45['a_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_exp = df_fitting_cycle_45['b_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_exp = df_fitting_cycle_45['c_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 exp
-# #             desired_area_45_exp = integral_exp_func(desired_length_base, a_55_exp, b_55_exp, c_55_exp)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' exp
-#             result_exp = minimize_scalar(area_difference_exp, args=(desired_area_45, a_45_exp, b_45_exp, c_45_exp), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_exp = result_exp.x
-
-#             # Desired area for 55
-#             area_45_exp = integral_exp_func(x_value_exp, a_45_exp, b_45_exp, c_45_exp)
-#             diff_45_exp = area_45_exp-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_exp.append(x_value_exp)
-#             list_equivalent_45_diffArea_exp.append(diff_45_exp)
-
-#         #     print("EXP")
-#         #     print("EXP: Solution for x from equation:", x_value_exp)
-#         #     print("EXP: Area calculated from the x: ", area_45_exp)
-#         #     print("EXP: The difference: ", diff_45_exp)
-
-#             ### EXP + LINEAR
-#             # Parameters of the exp function (replace with your values)
-#             a_55_exp_linear = df_fitting_cycle_55['a_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_exp_linear = df_fitting_cycle_55['b_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_exp_linear = df_fitting_cycle_55['c_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             d_55_exp_linear = df_fitting_cycle_55['d_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_exp_linear = df_fitting_cycle_45['a_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_exp_linear = df_fitting_cycle_45['b_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_exp_linear = df_fitting_cycle_45['c_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             d_45_exp_linear = df_fitting_cycle_45['d_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 exp
-# #             desired_area_45_exp = integral_exp_func(desired_length_base, a_55_exp, b_55_exp, c_55_exp)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' exp
-#             result_exp_linear = minimize_scalar(area_difference_exp_linear, args=(desired_area_45, a_45_exp_linear, 
-#                                                                                   b_45_exp_linear, c_45_exp_linear,
-#                                                                                   d_45_exp_linear), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_exp_linear = result_exp_linear.x
-
-#             # Desired area for 55
-#             area_45_exp_linear = integral_exp_linear_func(x_value_exp_linear, a_45_exp_linear, b_45_exp_linear, 
-#                                                           c_45_exp_linear, d_45_exp_linear)
-#             diff_45_exp_linear = area_45_exp_linear-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_exp_linear.append(x_value_exp_linear)
-#             list_equivalent_45_diffArea_exp_linear.append(diff_45_exp_linear)
-            
-#             ### TANH
-#             # Parameters of the tanh function (replace with your values)
-#             a_55_tanh = df_fitting_cycle_55['a_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_tanh = df_fitting_cycle_55['b_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_tanh = df_fitting_cycle_55['c_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_tanh = df_fitting_cycle_45['a_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_tanh = df_fitting_cycle_45['b_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_tanh = df_fitting_cycle_45['c_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 tanh
-# #             desired_area_45_tanh = integral_tanh_func(desired_length_base, a_55_tanh, b_55_tanh, c_55_tanh)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' tanh
-#             result_tanh = minimize_scalar(area_difference_tanh, args=(desired_area_45, a_45_tanh, b_45_tanh, c_45_tanh), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_tanh = result_tanh.x
-
-#             # Desired area for 55
-#             area_45_tanh = integral_exp_func(x_value_tanh, a_45_tanh, b_45_tanh, c_45_tanh)
-#             diff_45_tanh = area_45_tanh-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_tanh.append(x_value_tanh)
-#             list_equivalent_45_diffArea_tanh.append(diff_45_tanh)
-
-#         #     print("TANH")
-#         #     print("TANH: Solution for x from equation:", x_value_tanh)
-#         #     print("TANH: Area calculated from the x: ", area_45_tanh)
-#         #     print("TANH: The difference: ", diff_45_tanh)
-    
-#     # Prepare for the column name
-#     str_eq = 'eq_'+str(temp_target)+'C_wrt_'+str(temp_base)+'C_'
-#     str_eq_time = str_eq + 'time_'
-#     str_eq_diffArea = str_eq + 'diffArea_'
-#     list_func = ['log','linear_log','power','exp','linear_exp','tanh']
-    
-#     str_time_all = [elem1 + elem2 for elem1, elem2 in zip([str_eq_time]*6, list_func)]
-#     str_diffArea_all = [elem1 + elem2 for elem1, elem2 in zip([str_eq_diffArea]*6, list_func)]
-#     str_all = str_time_all+ str_diffArea_all
-
-#     # Add to the df
-#     df_fitting_cycle_45[str_all[0]] = list_equivalent_45_time_log
-#     df_fitting_cycle_45[str_all[1]] = list_equivalent_45_time_log_linear
-#     df_fitting_cycle_45[str_all[2]] = list_equivalent_45_time_power
-#     df_fitting_cycle_45[str_all[3]] = list_equivalent_45_time_exp
-#     df_fitting_cycle_45[str_all[4]] = list_equivalent_45_time_exp_linear
-#     df_fitting_cycle_45[str_all[5]] = list_equivalent_45_time_tanh
-
-#     df_fitting_cycle_45[str_all[4]] = list_equivalent_45_diffArea_log
-#     df_fitting_cycle_45[str_all[5]] = list_equivalent_45_diffArea_log_linear
-#     df_fitting_cycle_45[str_all[6]] = list_equivalent_45_diffArea_power
-#     df_fitting_cycle_45[str_all[7]] = list_equivalent_45_diffArea_exp
-#     df_fitting_cycle_45[str_all[8]] = list_equivalent_45_diffArea_exp_linear
-#     df_fitting_cycle_45[str_all[9]] = list_equivalent_45_diffArea_tanh
-    
-#     df_fitting_cycle_45['length_hour_perCycle'] = list_equivalent_45_timeLength_target
-    
-#     # # Multiply the selected columns with the 'actual time length' column and create new columns with '_actual' suffix
-#     df_fitting_cycle_45 = df_fitting_cycle_45.assign(**{f"{col}_actual": df_fitting_cycle_45[col] * df_fitting_cycle_45['length_hour_perCycle'] for col in str_time_all})
-    
-#     # Save the dataframe
-#     df_fitting_cycle_45.to_csv('output_dataframe/20230803_fitting_log_notNorm_using_actual_value_'+batch_name+"_eq_Ttarget_"+str(temp_target)+'C_wrt_Tbase_'+str(temp_base)+
-#                                '_cycle_'+str(cycle)+'.csv',index=False)
-    
-    
-#     ### PLOT
-#     str_eq = str(temp_target)+'C wrt '+str(temp_base)+'C'
-#     x_data = df_fitting_cycle_45['cycle']
-#     y_data_log_notActual = df_fitting_cycle_45.filter(like='_time_log').iloc[:,0]
-#     y_data_log_linear_notActual = df_fitting_cycle_45.filter(like='_time_linear_log').iloc[:,0]
-#     y_data_power_notActual = df_fitting_cycle_45.filter(like='_time_power').iloc[:,0]
-#     y_data_exp_notActual = df_fitting_cycle_45.filter(like='_time_exp').iloc[:,0]
-#     y_data_exp_linear_notActual = df_fitting_cycle_45.filter(like='_time_linear_exp').iloc[:,0]
-#     y_data_tanh_notActual = df_fitting_cycle_45.filter(like='_time_tanh').iloc[:,0]
-
-#     # Create a 2 by 2 subplot and plot the original data and the fitted curve for each function
-#     plt.close()
-#     plt.figure(figsize=(15, 8))
-
-#     # Subplot 1: Natural Logarithm
-#     plt.subplot(2, 3, 1)
-#     sns.scatterplot(x=x_data, y=y_data_log_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 2: Natural Logarithm + Linear
-#     plt.subplot(2, 3, 2)
-#     sns.scatterplot(x=x_data, y=y_data_log_linear_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic linear fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     # Subplot 3: Power Function
-#     plt.subplot(2, 3, 3)
-#     sns.scatterplot(x=x_data, y=y_data_power_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Power fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 4: Exponential Decay Upward
-#     plt.subplot(2, 3, 4)
-#     sns.scatterplot(x=x_data, y=y_data_exp_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 5: Exponential Decay Upward + Linear
-#     plt.subplot(2, 3, 5)
-#     sns.scatterplot(x=x_data, y=y_data_exp_linear_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward linear fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     # Subplot 6: Hyperbolic Tangent (tanh)
-#     plt.subplot(2, 3, 6)
-#     sns.scatterplot(x=x_data, y=y_data_tanh_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Tanh fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     plt.tight_layout()
-#     # plt.show()
-
-#     # PRINT
-#     print(str_eq)
-#     print('Median log: ', y_data_log_notActual.median())
-#     print('Median log linear: ', y_data_log_linear_notActual.median())
-#     print('Median exp: ', y_data_exp_notActual.median())
-#     print('Median exp linear: ', y_data_exp_linear_notActual.median())
-#     print('Median power: ', y_data_power_notActual.median())
-#     print('Median tanh: ', y_data_tanh_notActual.median())
-    
-    
-#     # # Ensure that the "figures/curve_fitting" folder exists
-#     # os.makedirs("figures/20230911_curve_fitting", exist_ok=True)
-
-#     # Ensure that the "figures/curve_fitting" folder exists
-#     os.makedirs("figures/20230803_curve_fitting_notNorm", exist_ok=True)
-
-#     # Save the figure in the "figures/curve_fitting" folder
-#     plt.savefig("figures/20230803_curve_fitting_notNorm/fit_equivalent_notNorm_using_actual_value_"+batch_name+"_"+str_eq+".png",
-#                 dpi=200)
-    
-#     plt.close()
-    
-#     # Name txt file
-#     file_name_txt_notActual = 'figures/'+folder_run_name+desired_foldername+'recap_notNorm_notActual_'+batch_name+'_'+str_eq+'.txt'
-    
-#     # Store the results
-#     with open(file_name_txt_notActual, "w") as file:        
-
-#         file.write(f"{batch_name}, target:{temp_target}C, base: {temp_base}C ")
-#         file.write(f'Median log: {y_data_log_notActual.median()} ')
-#         file.write(f'Median log linear: {y_data_log_linear_notActual.median()} ')
-#         file.write(f'Median exp: {y_data_exp_notActual.median()} ')
-#         file.write(f'Median exp linear: {y_data_exp_linear_notActual.median()} ')
-#         file.write(f'Median power: {y_data_power_notActual.median()} ')
-#         file.write(f'Median tanh: {y_data_tanh_notActual.median()} ')
-
-    
-#     ### PLOT ACTUAL
-#     str_eq = str(temp_target)+'C wrt '+str(temp_base)+'C'
-#     x_data = df_fitting_cycle_45['cycle']
-# #     print(df_fitting_cycle_45['length_hour_perCycle'])
-#     y_data_log = df_fitting_cycle_45.filter(like='_time_log_actual').iloc[:,0]
-# #     print(y_data_log)
-#     y_data_log_linear = df_fitting_cycle_45.filter(like='_time_linear_log_actual').iloc[:,0]
-#     y_data_power = df_fitting_cycle_45.filter(like='_time_power_actual').iloc[:,0]
-#     y_data_exp = df_fitting_cycle_45.filter(like='_time_exp_actual').iloc[:,0]
-#     y_data_exp_linear = df_fitting_cycle_45.filter(like='_time_linear_exp_actual').iloc[:,0]
-#     y_data_tanh = df_fitting_cycle_45.filter(like='_time_tanh_actual').iloc[:,0]
-
-#     # Create a 2 by 2 subplot and plot the original data and the fitted curve for each function
-#     plt.close()
-#     plt.figure(figsize=(15, 8))
-
-#     # Subplot 1: Natural Logarithm
-#     plt.subplot(2, 3, 1)
-#     sns.scatterplot(x=x_data, y=y_data_log, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-    
-#     # Subplot 2: Natural Logarithm + Linear
-#     plt.subplot(2, 3, 2)
-#     sns.scatterplot(x=x_data, y=y_data_log_linear, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic linear fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-    
-#     # Subplot 3: Power Function
-#     plt.subplot(2, 3, 3)
-#     sns.scatterplot(x=x_data, y=y_data_power, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Power fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     # Subplot 4: Exponential Decay Upward 
-#     plt.subplot(2, 3, 4)
-#     sns.scatterplot(x=x_data, y=y_data_exp, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     # Subplot 5: Exponential Decay Upward 
-#     plt.subplot(2, 3, 5)
-#     sns.scatterplot(x=x_data, y=y_data_exp_linear, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward linear fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     # Subplot 4: Hyperbolic Tangent (tanh)
-#     plt.subplot(2, 3, 6)
-#     sns.scatterplot(x=x_data, y=y_data_tanh, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Tanh fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     plt.tight_layout()
-#     # plt.show()
-
-#     # Name txt file
-#     file_name_txt = 'figures/'+folder_run_name+desired_foldername+'recap_fit_equivalent_notNorm_actualValue_'+batch_name+'_'+str_eq+'.txt'
-    
-#     # Store the results
-#     with open(file_name_txt, "w") as file:        
-    
-#         file.write(f"{batch_name}, target:{temp_target}C, base: {temp_base}C ")
-#         file.write(f'Median log: {y_data_log.median()} ')
-#         file.write(f'Median log linear: {y_data_log_linear.median()} ')
-#         file.write(f'Median exp: {y_data_exp.median()} ')
-#         file.write(f'Median exp_linear: {y_data_exp_linear.median()} ')
-#         file.write(f'Median power: {y_data_power.median()} ')
-#         file.write(f'Median tanh: {y_data_tanh.median()} ')
-    
-    
-#     # # Ensure that the "figures/curve_fitting" folder exists
-#     # os.makedirs("figures/20230911_curve_fitting", exist_ok=True)
-    
-#     # Save the figure in the "figures/curve_fitting" folder
-#     plt.savefig('figures/'+folder_run_name+desired_foldername+
-#                 'fit_equivalent_notNorm_actualValue_'+
-#                 batch_name+"_"+str_eq+".png",
-#                 dpi=200)
-    
-#     return df_fitting_cycle_45
-
-
-# notNorm
-
-# def calculate_equivalent_time_using_actual_data_notNorm(df_fitting_cycle_45, 
-#                                                         df_fitting_cycle_55,
-#                                                         temp_target,
-#                                                         temp_base,
-#                                                         df_calculated_area_45C, 
-#                                                         df_calculated_area_55C,
-#                                                         batch_name,
-#                                                         desired_foldername): # Find equivalent in 45C
-    
-# #     (df_calculated_area_45C['PCEmppArea_median_perHour'])[df_calculated_area_45C['cycle']==1].values[0]
-    
-#     unique_45C_cycle = df_fitting_cycle_45['cycle'].unique()
-#     unique_55C_cycle = df_fitting_cycle_55['cycle'].unique()
-    
-#     # Create folder if not exists yet
-#     if not os.path.exists('figures/'+folder_run_name+desired_foldername):
-#         os.makedirs('figures/'+folder_run_name+desired_foldername)
-
-#     unique_45C_cycle = df_fitting_cycle_45['cycle'].unique()
-#     unique_55C_cycle = df_fitting_cycle_55['cycle'].unique()
-    
-#     # Find the length of the base
-#     # if (temp_base == 45) and (temp_target == 55):
-#     #     desired_length_base = 1.5 # 55C
-#     # elif (temp_base == 55) and (temp_target == 45):
-#     #     desired_length_base = 3 # 45C
-#     # elif temp_base == 35: 
-#     #     desired_length_base = 3 # 45C
-    
-#     if (temp_target == 55):
-#         desired_length_base = 1.5 # 55C
-#     elif (temp_target == 45):
-#         desired_length_base = 3 # 45C
-#     elif (temp_target == 35): 
-#         desired_length_base = 6 # 45C
-#     elif (temp_target == 25): 
-#         desired_length_base = 12 # 45C
-
-#     list_equivalent_45_time_log = []
-#     list_equivalent_45_time_log_linear = []
-#     list_equivalent_45_time_power = []
-#     list_equivalent_45_time_exp = []
-#     list_equivalent_45_time_exp_linear = []
-#     list_equivalent_45_time_tanh = []
-
-#     list_equivalent_45_diffArea_log = []
-#     list_equivalent_45_diffArea_log_linear = []
-#     list_equivalent_45_diffArea_power = []
-#     list_equivalent_45_diffArea_exp = []
-#     list_equivalent_45_diffArea_exp_linear = []
-#     list_equivalent_45_diffArea_tanh = []
-    
-#     list_equivalent_45_timeLength_target = []
-    
-#     # Create a new list containing elements present in both lists (unique cycles)
-#     common_cycle = [x for x in unique_45C_cycle if x in unique_55C_cycle]
-
-#     # Go through each cycle
-#     for cycle in unique_45C_cycle:
-        
-#         # If cycle is not on the common cycle:
-#         if cycle not in common_cycle:
-            
-#             # Save the values
-#             list_equivalent_45_time_log.append(np.nan)
-#             list_equivalent_45_diffArea_log.append(np.nan)
-            
-#             list_equivalent_45_time_log_linear.append(np.nan)
-#             list_equivalent_45_diffArea_log_linear.append(np.nan)
-            
-#             list_equivalent_45_time_power.append(np.nan)
-#             list_equivalent_45_diffArea_power.append(np.nan)
-            
-#             list_equivalent_45_time_exp.append(np.nan)
-#             list_equivalent_45_diffArea_exp.append(np.nan)
-            
-#             list_equivalent_45_time_exp_linear.append(np.nan)
-#             list_equivalent_45_diffArea_exp_linear.append(np.nan)
-            
-#             list_equivalent_45_time_tanh.append(np.nan)
-#             list_equivalent_45_diffArea_tanh.append(np.nan)
-            
-#             list_equivalent_45_timeLength_target.append(np.nan)
-        
-#         # If cycle is common:
-#         elif cycle in common_cycle:
-            
-#             ### DESIRED AREA CALCULATION
-            
-#             # These ones are actual value
-#             desired_area_45 = (df_calculated_area_55C['PCEmppArea_median_perHour'])[df_calculated_area_55C['cycle']==cycle].values[0]
-#             actual_area_45 = (df_calculated_area_45C['PCEmppArea_median_perHour'])[df_calculated_area_45C['cycle']==cycle].values[0]
-            
-#             # Actual time length of the target
-#             actual_time_length_45 = (df_calculated_area_45C['length_hour_perCycle'])[df_calculated_area_45C['cycle']==cycle].values[0]
-#             list_equivalent_45_timeLength_target.append(actual_time_length_45)
-            
-#             ### LOG
-#             # Parameters of the logarithmic function (replace with your values)
-#             a_55_log = df_fitting_cycle_55['a_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_log = df_fitting_cycle_55['b_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_log = df_fitting_cycle_55['c_fit_log'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_log = df_fitting_cycle_45['a_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_log = df_fitting_cycle_45['b_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_log = df_fitting_cycle_45['c_fit_log'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 log/ based on the function
-#             desired_area_45_log = integral_logarithmic_func(desired_length_base, a_55_log, b_55_log, c_55_log)#logarithmic_func(x_55,a_55,b_55,c_55)
-            
-#             # Calculate the value of 'x' log
-#             result_log = minimize_scalar(area_difference_log, args=(desired_area_45_log, a_45_log, b_45_log, c_45_log), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_log = result_log.x
-
-#             # Desired area for 55
-#             area_45_log = integral_logarithmic_func(x_value_log, a_45_log, b_45_log, c_45_log)
-#             diff_45_log = area_45_log-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_log.append(x_value_log)
-#             list_equivalent_45_diffArea_log.append(diff_45_log)
-
-#             ### LOG + LINEAR
-#             # Parameters of the logarithmic function (replace with your values)
-#             a_55_log_linear = df_fitting_cycle_55['a_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_log_linear = df_fitting_cycle_55['b_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_log_linear = df_fitting_cycle_55['c_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             d_55_log_linear = df_fitting_cycle_55['d_fit_log_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_log_linear = df_fitting_cycle_45['a_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_log_linear = df_fitting_cycle_45['b_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_log_linear = df_fitting_cycle_45['c_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             d_45_log_linear = df_fitting_cycle_45['d_fit_log_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 log
-# #             desired_area_45_log = integral_logarithmic_func(desired_length_base, a_55_log, b_55_log, c_55_log)#logarithmic_func(x_55,a_55,b_55,c_55)
-            
-#             # Calculate the value of 'x' log
-#             result_log_linear = minimize_scalar(area_difference_log_linear, args=(desired_area_45, a_45_log_linear, 
-#                                                                                   b_45_log_linear, c_45_log_linear,
-#                                                                                   d_45_log_linear), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_log_linear = result_log_linear.x
-
-#             # Desired area for 55
-#             area_45_log_linear = integral_logarithmic_linear_func(x_value_log_linear, a_45_log_linear, 
-#                                                                   b_45_log_linear, c_45_log_linear, d_45_log_linear)
-#             diff_45_log_linear = area_45_log_linear-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_log_linear.append(x_value_log_linear)
-#             list_equivalent_45_diffArea_log_linear.append(diff_45_log_linear)
-
-
-#             ### POWER
-#             # Parameters of the power function (replace with your values)
-#             a_55_power = df_fitting_cycle_55['a_fit_power'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_power = df_fitting_cycle_55['b_fit_power'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_power = df_fitting_cycle_45['a_fit_power'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_power = df_fitting_cycle_45['b_fit_power'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 power
-# #             desired_area_45_power = integral_power_func(desired_length_base, a_55_power, b_55_power)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' power
-#             result_power = minimize_scalar(area_difference_power, args=(desired_area_45, a_45_power, b_45_power), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_power = result_power.x
-
-#             # Desired area for 55
-#             area_45_power = integral_power_func(x_value_power, a_45_power, b_45_power)
-#             diff_45_power = area_45_power-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_power.append(x_value_power)
-#             list_equivalent_45_diffArea_power.append(diff_45_power)
-
-#             ### EXP
-#             # Parameters of the exp function (replace with your values)
-#             a_55_exp = df_fitting_cycle_55['a_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_exp = df_fitting_cycle_55['b_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_exp = df_fitting_cycle_55['c_fit_exp'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_exp = df_fitting_cycle_45['a_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_exp = df_fitting_cycle_45['b_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_exp = df_fitting_cycle_45['c_fit_exp'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 exp
-# #             desired_area_45_exp = integral_exp_func(desired_length_base, a_55_exp, b_55_exp, c_55_exp)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' exp
-#             result_exp = minimize_scalar(area_difference_exp, args=(desired_area_45, a_45_exp, b_45_exp, c_45_exp), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_exp = result_exp.x
-
-#             # Desired area for 55
-#             area_45_exp = integral_exp_func(x_value_exp, a_45_exp, b_45_exp, c_45_exp)
-#             diff_45_exp = area_45_exp-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_exp.append(x_value_exp)
-#             list_equivalent_45_diffArea_exp.append(diff_45_exp)
-
-
-#             ### EXP + LINEAR
-#             # Parameters of the exp function (replace with your values)
-#             a_55_exp_linear = df_fitting_cycle_55['a_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_exp_linear = df_fitting_cycle_55['b_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_exp_linear = df_fitting_cycle_55['c_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             d_55_exp_linear = df_fitting_cycle_55['d_fit_exp_linear'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_exp_linear = df_fitting_cycle_45['a_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_exp_linear = df_fitting_cycle_45['b_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_exp_linear = df_fitting_cycle_45['c_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             d_45_exp_linear = df_fitting_cycle_45['d_fit_exp_linear'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 exp
-# #             desired_area_45_exp = integral_exp_func(desired_length_base, a_55_exp, b_55_exp, c_55_exp)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' exp
-#             result_exp_linear = minimize_scalar(area_difference_exp_linear, args=(desired_area_45, a_45_exp_linear, 
-#                                                                                   b_45_exp_linear, c_45_exp_linear,
-#                                                                                   d_45_exp_linear), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_exp_linear = result_exp_linear.x
-
-#             # Desired area for 55
-#             area_45_exp_linear = integral_exp_linear_func(x_value_exp_linear, a_45_exp_linear, b_45_exp_linear, 
-#                                                           c_45_exp_linear, d_45_exp_linear)
-#             diff_45_exp_linear = area_45_exp_linear-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_exp_linear.append(x_value_exp_linear)
-#             list_equivalent_45_diffArea_exp_linear.append(diff_45_exp_linear)
-            
-#             ### TANH
-#             # Parameters of the tanh function (replace with your values)
-#             a_55_tanh = df_fitting_cycle_55['a_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             b_55_tanh = df_fitting_cycle_55['b_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-#             c_55_tanh = df_fitting_cycle_55['c_fit_tanh'][df_fitting_cycle_55['cycle']==cycle].values[0]
-
-#             a_45_tanh = df_fitting_cycle_45['a_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             b_45_tanh = df_fitting_cycle_45['b_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-#             c_45_tanh = df_fitting_cycle_45['c_fit_tanh'][df_fitting_cycle_45['cycle']==cycle].values[0]
-
-#             # Desired area for 45 tanh
-# #             desired_area_45_tanh = integral_tanh_func(desired_length_base, a_55_tanh, b_55_tanh, c_55_tanh)#logarithmic_func(x_55,a_55,b_55,c_55)
-
-#             # Calculate the value of 'x' tanh
-#             result_tanh = minimize_scalar(area_difference_tanh, args=(desired_area_45, a_45_tanh, b_45_tanh, c_45_tanh), method='bounded', bounds=(-10.0, 10.0))
-#             x_value_tanh = result_tanh.x
-
-#             # Desired area for 55
-#             area_45_tanh = integral_exp_func(x_value_tanh, a_45_tanh, b_45_tanh, c_45_tanh)
-#             diff_45_tanh = area_45_tanh-desired_area_45
-
-#             # Save the values
-#             list_equivalent_45_time_tanh.append(x_value_tanh)
-#             list_equivalent_45_diffArea_tanh.append(diff_45_tanh)
-    
-#     # Prepare for the column name
-#     str_eq = 'eq_'+str(temp_target)+'C_wrt_'+str(temp_base)+'C_'
-#     str_eq_time = str_eq + 'time_'
-#     str_eq_diffArea = str_eq + 'diffArea_'
-#     list_func = ['log','linear_log','power','exp','linear_exp','tanh']
-    
-#     str_time_all = [elem1 + elem2 for elem1, elem2 in zip([str_eq_time]*6, list_func)]
-#     str_diffArea_all = [elem1 + elem2 for elem1, elem2 in zip([str_eq_diffArea]*6, list_func)]
-#     str_all = str_time_all+ str_diffArea_all
-
-#     # Add to the df
-#     df_fitting_cycle_45[str_all[0]] = list_equivalent_45_time_log
-#     df_fitting_cycle_45[str_all[1]] = list_equivalent_45_time_log_linear
-#     df_fitting_cycle_45[str_all[2]] = list_equivalent_45_time_power
-#     df_fitting_cycle_45[str_all[3]] = list_equivalent_45_time_exp
-#     df_fitting_cycle_45[str_all[4]] = list_equivalent_45_time_exp_linear
-#     df_fitting_cycle_45[str_all[5]] = list_equivalent_45_time_tanh
-
-#     df_fitting_cycle_45[str_all[4]] = list_equivalent_45_diffArea_log
-#     df_fitting_cycle_45[str_all[5]] = list_equivalent_45_diffArea_log_linear
-#     df_fitting_cycle_45[str_all[6]] = list_equivalent_45_diffArea_power
-#     df_fitting_cycle_45[str_all[7]] = list_equivalent_45_diffArea_exp
-#     df_fitting_cycle_45[str_all[8]] = list_equivalent_45_diffArea_exp_linear
-#     df_fitting_cycle_45[str_all[9]] = list_equivalent_45_diffArea_tanh
-    
-#     df_fitting_cycle_45['length_hour_perCycle'] = list_equivalent_45_timeLength_target
-    
-#     # # Multiply the selected columns with the 'actual time length' column and create new columns with '_actual' suffix
-#     df_fitting_cycle_45 = df_fitting_cycle_45.assign(**{f"{col}_actual": df_fitting_cycle_45[col] * df_fitting_cycle_45['length_hour_perCycle'] for col in str_time_all})
-    
-#     # Save the dataframe
-#     df_fitting_cycle_45.to_csv('output_dataframe/20230803_fitting_log_notNorm_using_actual_value_'+batch_name+"_eq_Ttarget_"+str(temp_target)+'C_wrt_Tbase_'+str(temp_base)+
-#                                '_cycle_'+str(cycle)+'.csv',index=False)
-    
-    
-#     ### PLOT
-#     str_eq = str(temp_target)+'C wrt '+str(temp_base)+'C'
-#     x_data = df_fitting_cycle_45['cycle']
-#     y_data_log_notActual = df_fitting_cycle_45.filter(like='_time_log').iloc[:,0]
-#     y_data_log_linear_notActual = df_fitting_cycle_45.filter(like='_time_linear_log').iloc[:,0]
-#     y_data_power_notActual = df_fitting_cycle_45.filter(like='_time_power').iloc[:,0]
-#     y_data_exp_notActual = df_fitting_cycle_45.filter(like='_time_exp').iloc[:,0]
-#     y_data_exp_linear_notActual = df_fitting_cycle_45.filter(like='_time_linear_exp').iloc[:,0]
-#     y_data_tanh_notActual = df_fitting_cycle_45.filter(like='_time_tanh').iloc[:,0]
-
-#     # Create a 2 by 2 subplot and plot the original data and the fitted curve for each function
-#     plt.close()
-#     plt.figure(figsize=(15, 8))
-
-#     # Subplot 1: Natural Logarithm
-#     plt.subplot(2, 3, 1)
-#     sns.scatterplot(x=x_data, y=y_data_log_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 2: Natural Logarithm + Linear
-#     plt.subplot(2, 3, 2)
-#     sns.scatterplot(x=x_data, y=y_data_log_linear_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic linear fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     # Subplot 3: Power Function
-#     plt.subplot(2, 3, 3)
-#     sns.scatterplot(x=x_data, y=y_data_power_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Power fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 4: Exponential Decay Upward
-#     plt.subplot(2, 3, 4)
-#     sns.scatterplot(x=x_data, y=y_data_exp_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-    
-#     # Subplot 5: Exponential Decay Upward + Linear
-#     plt.subplot(2, 3, 5)
-#     sns.scatterplot(x=x_data, y=y_data_exp_linear_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward linear fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     # Subplot 6: Hyperbolic Tangent (tanh)
-#     plt.subplot(2, 3, 6)
-#     sns.scatterplot(x=x_data, y=y_data_tanh_notActual, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Tanh fit equivalent {str_eq}')
-#     plt.ylim([-5,8])
-
-#     plt.tight_layout()
-#     # plt.show()
-
-#     # PRINT
-#     print(str_eq)
-#     print('Median log: ', y_data_log_notActual.median())
-#     print('Median log linear: ', y_data_log_linear_notActual.median())
-#     print('Median exp: ', y_data_exp_notActual.median())
-#     print('Median exp linear: ', y_data_exp_linear_notActual.median())
-#     print('Median power: ', y_data_power_notActual.median())
-#     print('Median tanh: ', y_data_tanh_notActual.median())
-    
-    
-#     # # Ensure that the "figures/curve_fitting" folder exists
-#     # os.makedirs("figures/20230911_curve_fitting", exist_ok=True)
-
-#     # Ensure that the "figures/curve_fitting" folder exists
-#     os.makedirs("figures/20230803_curve_fitting_notNorm", exist_ok=True)
-
-#     # Save the figure in the "figures/curve_fitting" folder
-#     plt.savefig("figures/20230803_curve_fitting_notNorm/fit_equivalent_notNorm_using_actual_value_"+batch_name+"_"+str_eq+".png",
-#                 dpi=200)
-    
-#     plt.close()
-    
-#     # Name txt file
-#     file_name_txt_notActual = 'figures/'+folder_run_name+desired_foldername+'recap_notNorm_notActual_'+batch_name+'_'+str_eq+'.txt'
-    
-#     # Store the results
-#     with open(file_name_txt_notActual, "w") as file:        
-
-#         file.write(f"{batch_name}, target:{temp_target}C, base: {temp_base}C ")
-#         file.write(f'Median log: {y_data_log_notActual.median()} ')
-#         file.write(f'Median log linear: {y_data_log_linear_notActual.median()} ')
-#         file.write(f'Median exp: {y_data_exp_notActual.median()} ')
-#         file.write(f'Median exp linear: {y_data_exp_linear_notActual.median()} ')
-#         file.write(f'Median power: {y_data_power_notActual.median()} ')
-#         file.write(f'Median tanh: {y_data_tanh_notActual.median()} ')
-
-    
-#     ### PLOT ACTUAL
-#     str_eq = str(temp_target)+'C wrt '+str(temp_base)+'C'
-#     x_data = df_fitting_cycle_45['cycle']
-# #     print(df_fitting_cycle_45['length_hour_perCycle'])
-#     y_data_log = df_fitting_cycle_45.filter(like='_time_log_actual').iloc[:,0]
-# #     print(y_data_log)
-#     y_data_log_linear = df_fitting_cycle_45.filter(like='_time_linear_log_actual').iloc[:,0]
-#     y_data_power = df_fitting_cycle_45.filter(like='_time_power_actual').iloc[:,0]
-#     y_data_exp = df_fitting_cycle_45.filter(like='_time_exp_actual').iloc[:,0]
-#     y_data_exp_linear = df_fitting_cycle_45.filter(like='_time_linear_exp_actual').iloc[:,0]
-#     y_data_tanh = df_fitting_cycle_45.filter(like='_time_tanh_actual').iloc[:,0]
-
-#     # Create a 2 by 2 subplot and plot the original data and the fitted curve for each function
-#     plt.close()
-#     plt.figure(figsize=(15, 8))
-
-#     # Subplot 1: Natural Logarithm
-#     plt.subplot(2, 3, 1)
-#     sns.scatterplot(x=x_data, y=y_data_log, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-    
-#     # Subplot 2: Natural Logarithm + Linear
-#     plt.subplot(2, 3, 2)
-#     sns.scatterplot(x=x_data, y=y_data_log_linear, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Logarithmic linear fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-    
-#     # Subplot 3: Power Function
-#     plt.subplot(2, 3, 3)
-#     sns.scatterplot(x=x_data, y=y_data_power, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Power fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     # Subplot 4: Exponential Decay Upward 
-#     plt.subplot(2, 3, 4)
-#     sns.scatterplot(x=x_data, y=y_data_exp, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     # Subplot 5: Exponential Decay Upward 
-#     plt.subplot(2, 3, 5)
-#     sns.scatterplot(x=x_data, y=y_data_exp_linear, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Exponential decay upward linear fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     # Subplot 4: Hyperbolic Tangent (tanh)
-#     plt.subplot(2, 3, 6)
-#     sns.scatterplot(x=x_data, y=y_data_tanh, label='Equivalent time',alpha=0.6,edgecolor = None)
-#     plt.title(f'Tanh fit equivalent {str_eq}')
-#     plt.ylim([-0.1,4])
-
-#     plt.tight_layout()
-#     # plt.show()
-
-#     # Name txt file
-#     file_name_txt = 'figures/'+folder_run_name+desired_foldername+'recap_fit_equivalent_notNorm_actualValue_'+batch_name+'_'+str_eq+'.txt'
-    
-#     # Store the results
-#     with open(file_name_txt, "w") as file:        
-    
-#         file.write(f"{batch_name}, target:{temp_target}C, base: {temp_base}C ")
-#         file.write(f'Median log: {y_data_log.median()} ')
-#         file.write(f'Median log linear: {y_data_log_linear.median()} ')
-#         file.write(f'Median exp: {y_data_exp.median()} ')
-#         file.write(f'Median exp_linear: {y_data_exp_linear.median()} ')
-#         file.write(f'Median power: {y_data_power.median()} ')
-#         file.write(f'Median tanh: {y_data_tanh.median()} ')
-    
-    
-#     # # Ensure that the "figures/curve_fitting" folder exists
-#     # os.makedirs("figures/20230911_curve_fitting", exist_ok=True)
-    
-#     # Save the figure in the "figures/curve_fitting" folder
-#     plt.savefig('figures/'+folder_run_name+desired_foldername+
-#                 'fit_equivalent_notNorm_actualValue_'+
-#                 batch_name+"_"+str_eq+".png",
-#                 dpi=200)
-    
-#     return df_fitting_cycle_45
-
 # Fitting for the not norm aging cycle curves 
 def fit_aging_cycle_function_notNorm(df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C):
     
@@ -4909,6 +3253,87 @@ def fit_aging_cycle_function_notNorm(df_all_25C, df_all_35C, df_all_45C, df_all_
         
     return batchname_list_tracking
 
+def fit_aging_cycle_function_notNorm_no65C(df_all_25C, df_all_35C, df_all_45C, df_all_55C):
+    
+    batchname_list_tracking = []
+    
+    # Go through each batch name
+    for batch_name in batchname_list:
+        
+        # Select specific batch for each temperature
+        df_batch_selected_25C = df_all_25C[(df_all_25C['temperature']==25) & (df_all_25C['device_name']==batch_name)]
+        df_batch_selected_35C = df_all_35C[(df_all_35C['temperature']==35) & (df_all_35C['device_name']==batch_name)]
+        df_batch_selected_45C = df_all_45C[(df_all_45C['temperature']==45) & (df_all_45C['device_name']==batch_name)]
+        df_batch_selected_55C = df_all_55C[(df_all_55C['temperature']==55) & (df_all_55C['device_name']==batch_name)]
+        # df_batch_selected_65C = df_all_65C[(df_all_65C['temperature']==65) & (df_all_65C['device_name']==batch_name)]
+
+        # Go through each row
+        # df_median_65C = ((df_batch_selected_65C['MPPT'].iloc[0])['time_h']).to_frame()
+        df_median_55C = ((df_batch_selected_55C['MPPT'].iloc[0])['time_h']).to_frame()
+        df_median_45C = ((df_batch_selected_45C['MPPT'].iloc[0])['time_h']).to_frame()
+        df_median_35C = ((df_batch_selected_35C['MPPT'].iloc[0])['time_h']).to_frame()
+        df_median_25C = ((df_batch_selected_25C['MPPT'].iloc[0])['time_h']).to_frame()
+        
+        # df_median_65C['time_h_collapsed']=((df_batch_selected_65C['MPPT'].iloc[0])['time_h_collapsed'])
+        df_median_55C['time_h_collapsed']=((df_batch_selected_55C['MPPT'].iloc[0])['time_h_collapsed'])
+        df_median_45C['time_h_collapsed']=((df_batch_selected_45C['MPPT'].iloc[0])['time_h_collapsed'])
+        df_median_35C['time_h_collapsed']=((df_batch_selected_35C['MPPT'].iloc[0])['time_h_collapsed'])
+        df_median_25C['time_h_collapsed']=((df_batch_selected_25C['MPPT'].iloc[0])['time_h_collapsed'])
+        
+        # df_median_65C['cycle']=((df_batch_selected_65C['MPPT'].iloc[0])['cycle'])
+        df_median_55C['cycle']=((df_batch_selected_55C['MPPT'].iloc[0])['cycle'])
+        df_median_45C['cycle']=((df_batch_selected_45C['MPPT'].iloc[0])['cycle'])
+        df_median_35C['cycle']=((df_batch_selected_35C['MPPT'].iloc[0])['cycle'])
+        df_median_25C['cycle']=((df_batch_selected_25C['MPPT'].iloc[0])['cycle'])
+
+        # df_median_65C = calculate_median_specific_T(df_batch_selected_65C, df_median_65C)
+        df_median_55C = calculate_median_specific_T(df_batch_selected_55C, df_median_55C)
+        df_median_45C = calculate_median_specific_T(df_batch_selected_45C, df_median_45C)
+        df_median_35C = calculate_median_specific_T(df_batch_selected_35C, df_median_35C)
+        df_median_25C = calculate_median_specific_T(df_batch_selected_25C, df_median_25C)
+        
+        # Need to divide by # max of the column? Yes
+        max_value_25C = df_median_25C['PCEmpp_median'].max()
+        max_value_35C = df_median_35C['PCEmpp_median'].max()
+        max_value_45C = df_median_45C['PCEmpp_median'].max()
+        max_value_55C = df_median_55C['PCEmpp_median'].max()
+        # max_value_65C = df_median_65C['PCEmpp_median'].max()
+        
+        df_median_25C['PCEmpp_median_norm'] = df_median_25C['PCEmpp_median']/max_value_25C
+        df_median_35C['PCEmpp_median_norm'] = df_median_35C['PCEmpp_median']/max_value_35C
+        df_median_45C['PCEmpp_median_norm'] = df_median_45C['PCEmpp_median']/max_value_45C
+        df_median_55C['PCEmpp_median_norm'] = df_median_55C['PCEmpp_median']/max_value_55C
+        # df_median_65C['PCEmpp_median_norm'] = df_median_65C['PCEmpp_median']/max_value_65C
+                
+        # Fit all cycles power and tanh
+        # df_fitting_cycle_25C = fit_all_cycles_notNorm(df_median_25C, 25, batch_name)
+        # df_fitting_cycle_35C = fit_all_cycles_notNorm(df_median_35C, 35, batch_name)
+        # df_fitting_cycle_45C = fit_all_cycles_notNorm(df_median_45C, 45, batch_name)
+        # df_fitting_cycle_55C = fit_all_cycles_notNorm(df_median_55C, 55, batch_name)
+        # df_fitting_cycle_65C = fit_all_cycles_notNorm(df_median_65C, 65, batch_name)
+        
+        # Fit all cycles biexp and logistic linear
+        df_fitting_cycle_25C = fit_all_cycles_notNorm(df_median_25C, 25, batch_name)
+        df_fitting_cycle_35C = fit_all_cycles_notNorm(df_median_35C, 35, batch_name)
+        df_fitting_cycle_45C = fit_all_cycles_notNorm(df_median_45C, 45, batch_name)
+        df_fitting_cycle_55C = fit_all_cycles_notNorm(df_median_55C, 55, batch_name)
+        # df_fitting_cycle_65C = fit_all_cycles_notNorm(df_median_65C, 65, batch_name)
+        
+
+        batchname_list_tracking.append([batch_name,
+                                        df_fitting_cycle_25C,
+                                        df_fitting_cycle_35C,
+                                        df_fitting_cycle_45C,
+                                        df_fitting_cycle_55C,
+                                        # df_fitting_cycle_65C,
+                                        df_median_25C,
+                                        df_median_35C,
+                                        df_median_45C, 
+                                        df_median_55C, 
+                                        # df_median_65C,
+                                        ])
+        
+    return batchname_list_tracking
 
 ###############################################################################
 # FUNCTIONS: BACK-CALCULATE FOR EQUIVALENT OF T, ACTUAL VALUE/ CUMSUM
@@ -5116,6 +3541,41 @@ def run_load_data_python_allTs(path_25C, path_35C, path_45C, path_55C, path_65C,
     
     return df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C
 
+def run_load_data_python_allTs_no65C(path_25C, path_35C, path_45C, path_55C, 
+                                     cell_params_25C, cell_params_35C, cell_params_45C, cell_params_55C, #cell_params_65C, 
+                                     limit_h_25C, limit_h_35C, limit_h_45C, limit_h_55C, #limit_h_65C,
+                                     df_all_export=True):
+    """
+    Run loading all data for all temperatures
+    """
+
+    
+    # Load data from the folders into df WITH PYTHON
+    # df_all_25C = load_data_into_df(hour_cycle_25C, gap_25C, temperature_25C, path_25C)
+    # df_all_45C = load_data_into_df(hour_cycle_45C, gap_45C, temperature_45C, path_45C)
+    # df_all_55C = load_data_into_df(hour_cycle_55C, gap_55C, temperature_55C, path_55C)
+    
+    df_all_25C = load_data_from_python_into_df(hour_cycle_25C, gap_25C, temperature_25C, 
+                                               path_25C, cell_params_25C, limit_h=limit_h_25C)
+    df_all_35C = load_data_from_python_into_df(hour_cycle_35C, gap_35C, temperature_35C, 
+                                                path_35C, cell_params_35C, limit_h=limit_h_35C)
+    
+    df_all_45C = load_data_from_python_into_df(hour_cycle_45C, gap_45C, temperature_45C, 
+                                               path_45C, cell_params_45C, limit_h=limit_h_45C)
+    df_all_55C = load_data_from_python_into_df(hour_cycle_55C, gap_55C, temperature_55C, 
+                                               path_55C, cell_params_55C, limit_h=limit_h_55C)
+    # df_all_65C = load_data_from_python_into_df(hour_cycle_65C, gap_65C, temperature_65C, 
+    #                                            path_65C, cell_params_65C, limit_h=limit_h_65C)
+    
+    if df_all_export == True:
+        df_exported_25C = export_all_data(df_all_25C, folder_run_name, "raw_data_25C.csv")
+        df_exported_35C = export_all_data(df_all_35C, folder_run_name, "raw_data_35C.csv")
+        df_exported_45C = export_all_data(df_all_45C, folder_run_name, "raw_data_45C.csv")
+        df_exported_55C = export_all_data(df_all_55C, folder_run_name, "raw_data_55C.csv")
+        # df_exported_65C = export_all_data(df_all_65C, folder_run_name, "raw_data_65C.csv")
+    
+    return df_all_25C, df_all_35C, df_all_45C, df_all_55C, # df_all_65C
+
 # Run calculating area for each cycle for all temperatures
 def run_calculate_area_allTs(df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C):
     """
@@ -5135,6 +3595,25 @@ def run_calculate_area_allTs(df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_
         
     return(df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area, df_all_65C_area, df_all_25C_35C_45C_55C_65C_area)
 
+def run_calculate_area_allTs_no65C(df_all_25C, df_all_35C, df_all_45C, df_all_55C):
+    """
+    Run calculating area for each cycle for all temperatures
+    """
+    
+    # Calculate for all the df_all
+    df_all_25C_area = calculate_area_perCycle(df_all_25C)
+    df_all_35C_area = calculate_area_perCycle(df_all_35C)
+    df_all_45C_area = calculate_area_perCycle(df_all_45C)
+    df_all_55C_area = calculate_area_perCycle(df_all_55C)
+    # df_all_65C_area = calculate_area_perCycle(df_all_65C)
+    
+    # Concatenate everything
+    df_all_25C_35C_45C_55C_area = (pd.concat([df_all_25C_area, df_all_35C_area, df_all_45C_area, 
+                                              df_all_55C_area, 
+                                            #   df_all_65C_area,
+                                              ])).reset_index(drop=True)
+        
+    return(df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area, df_all_25C_35C_45C_55C_area)
     
 # Run calculating statistics for all the areas 
 def run_calculate_area_stats_allTs(df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area, df_all_65C_area):
@@ -5153,79 +3632,26 @@ def run_calculate_area_stats_allTs(df_all_25C_area, df_all_35C_area, df_all_45C_
 
     
     return(df_stats_25C, df_stats_35C, df_stats_45C, df_stats_55C, df_stats_65C, df_all_stats)
-    
 
-# Run the back calculate (NUMERICAL) based on the fitted equations
-# def run_calculate_equivalent_time_all_batches(batch_fitting, desired_foldername): 
+def run_calculate_area_stats_allTs_no65C(df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area):
+    """
+    Run calculating statistics for all the areas 
+    """
     
-#     list_all_backcalculations = []
+    df_stats_25C = calculate_area_perCycle_stats(df_all_25C_area)
+    df_stats_35C = calculate_area_perCycle_stats(df_all_35C_area)
+    df_stats_45C = calculate_area_perCycle_stats(df_all_45C_area)
+    df_stats_55C = calculate_area_perCycle_stats(df_all_55C_area)
+    # df_stats_65C = calculate_area_perCycle_stats(df_all_65C_area)
     
-#     # Go through all the lists
-#     for i in range(len(batchname_list)):
-        
-#         batch_name = batch_fitting[i][0]
-#         df_fitting_cycle_35 = batch_fitting[i][1]
-#         df_fitting_cycle_45 = batch_fitting[i][2]
-#         df_fitting_cycle_55 = batch_fitting[i][3]
-        
-        
-#         df_backcalculate_target_45_base_35 = calculate_equivalent_time(df_fitting_cycle_45,
-#                                                                        df_fitting_cycle_35,
-#                                                                        45,
-#                                                                        35,
-#                                                                        batch_name,
-#                                                                        desired_foldername)
-        
-#         df_backcalculate_target_55_base_35 = calculate_equivalent_time(df_fitting_cycle_55,
-#                                                                        df_fitting_cycle_35,
-#                                                                        55,
-#                                                                        35,
-#                                                                        batch_name,
-#                                                                        desired_foldername)
-        
-#         df_backcalculate_target_35_base_45 = calculate_equivalent_time(df_fitting_cycle_35,
-#                                                                        df_fitting_cycle_45,
-#                                                                        35,
-#                                                                        45,
-#                                                                        batch_name,
-#                                                                        desired_foldername)
-        
-#         df_backcalculate_target_55_base_45 = calculate_equivalent_time(df_fitting_cycle_55,
-#                                                                        df_fitting_cycle_45,
-#                                                                        55,
-#                                                                        45,
-#                                                                        batch_name,
-#                                                                        desired_foldername)
-        
-#         df_backcalculate_target_35_base_55 = calculate_equivalent_time(df_fitting_cycle_35,
-#                                                                        df_fitting_cycle_55,
-#                                                                        35,
-#                                                                        55,
-#                                                                        batch_name,
-#                                                                        desired_foldername)
-        
-#         df_backcalculate_target_45_base_55 = calculate_equivalent_time(df_fitting_cycle_45,
-#                                                                        df_fitting_cycle_55,
-#                                                                        45,
-#                                                                        55,
-#                                                                        batch_name)
-        
-#         # Create dictionary for all the results
-#         df_backcalculation = {
-#             'batch_name':batch_name,
-#             'backcalculate_target_45_base_35': df_backcalculate_target_45_base_35,
-#             'backcalculate_target_55_base_35': df_backcalculate_target_55_base_35,
-#             'backcalculate_target_35_base_45': df_backcalculate_target_35_base_45,
-#             'backcalculate_target_55_base_45': df_backcalculate_target_55_base_45,
-#             'backcalculate_target_35_base_55': df_backcalculate_target_35_base_55,
-#             'backcalculate_target_45_base_55': df_backcalculate_target_45_base_55,
-#             }
-        
-#         # Append to list
-#         list_all_backcalculations.append(df_backcalculation)
-    
-#     return(list_all_backcalculations)
+    # Concatenate everything
+    df_all_stats = (pd.concat([df_stats_25C, df_stats_35C, df_stats_45C, df_stats_55C, 
+                            #    df_stats_65C,
+                               ])).reset_index(drop=True)
 
+    
+    return(df_stats_25C, df_stats_35C, df_stats_45C, df_stats_55C, df_all_stats)
+    
 def calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_45, 
                                                         df_fitting_cycle_55,
                                                         temp_target,
@@ -6042,6 +4468,255 @@ def run_calculate_equivalent_time_all_batches_notNorm_v2_inc65C(batch_fitting_no
     
     return(list_all_backcalculations)
 
+def run_calculate_equivalent_time_all_batches_notNorm_v2_no65C(batch_fitting_notNorm, desired_foldername): 
+    '''
+    Version 2: based on 2023/10/27
+    Not norm based on the functions (desired area using functions)
+    '''
+    
+    list_all_backcalculations = []
+    
+    # Go through all the lists
+    for i in range(len(batchname_list)):
+        
+        batch_name = batch_fitting_notNorm[i][0]
+        df_fitting_cycle_25 = batch_fitting_notNorm[i][1]
+        df_fitting_cycle_35 = batch_fitting_notNorm[i][2]
+        df_fitting_cycle_45 = batch_fitting_notNorm[i][3]
+        df_fitting_cycle_55 = batch_fitting_notNorm[i][4]
+        # df_fitting_cycle_65 = batch_fitting_notNorm[i][5]
+        
+        df_median_25C = batch_fitting_notNorm[i][5]
+        df_median_35C = batch_fitting_notNorm[i][6]
+        df_median_45C = batch_fitting_notNorm[i][7]
+        df_median_55C = batch_fitting_notNorm[i][8]
+        # df_median_65C = batch_fitting_notNorm[i][10]
+        
+        df_calculated_area_25C = create_df_area_under_PCEmpp_median(df_median_25C)
+        df_calculated_area_35C = create_df_area_under_PCEmpp_median(df_median_35C)
+        df_calculated_area_45C = create_df_area_under_PCEmpp_median(df_median_45C)
+        df_calculated_area_55C = create_df_area_under_PCEmpp_median(df_median_55C)
+        # df_calculated_area_65C = create_df_area_under_PCEmpp_median(df_median_65C)
+        
+        # Base 25C
+        df_backcalculate_target_35_base_25 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_35,
+                                                                                                  df_fitting_cycle_25,
+                                                                                                  35,
+                                                                                                  25,
+                                                                                                  df_calculated_area_35C, 
+                                                                                                  df_calculated_area_25C,
+                                                                                                  batch_name,
+                                                                                                  desired_foldername)
+        
+        df_backcalculate_target_45_base_25 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_45,
+                                                                                                  df_fitting_cycle_25,
+                                                                                                  45,
+                                                                                                  25,
+                                                                                                  df_calculated_area_45C, 
+                                                                                                  df_calculated_area_25C,
+                                                                                                  batch_name,
+                                                                                                  desired_foldername)
+        
+        df_backcalculate_target_55_base_25 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_55,
+                                                                                                  df_fitting_cycle_25,
+                                                                                                  55,
+                                                                                                  25,
+                                                                                                  df_calculated_area_55C, 
+                                                                                                  df_calculated_area_25C,
+                                                                                                  batch_name,
+                                                                                                  desired_foldername)
+        
+        # df_backcalculate_target_65_base_25 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_65,
+        #                                                                                           df_fitting_cycle_25,
+        #                                                                                           65,
+        #                                                                                           25,
+        #                                                                                           df_calculated_area_65C, 
+        #                                                                                           df_calculated_area_25C,
+        #                                                                                           batch_name,
+        #                                                                                           desired_foldername)
+
+        # Base 35C        
+        df_backcalculate_target_25_base_35 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_25,
+                                                                                                  df_fitting_cycle_35,
+                                                                                                  25,
+                                                                                                  35,
+                                                                                                  df_calculated_area_25C, 
+                                                                                                  df_calculated_area_35C,
+                                                                                                  batch_name,
+                                                                                                  desired_foldername)
+        
+        df_backcalculate_target_45_base_35 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_45,
+                                                                                                 df_fitting_cycle_35,
+                                                                                                 45,
+                                                                                                 35,
+                                                                                                 df_calculated_area_45C, 
+                                                                                                 df_calculated_area_35C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        df_backcalculate_target_55_base_35 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_55,
+                                                                                                 df_fitting_cycle_35,
+                                                                                                 55,
+                                                                                                 35,
+                                                                                                 df_calculated_area_55C, 
+                                                                                                 df_calculated_area_35C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        # df_backcalculate_target_65_base_35 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_65,
+        #                                                                                          df_fitting_cycle_35,
+        #                                                                                          65,
+        #                                                                                          35,
+        #                                                                                          df_calculated_area_65C, 
+        #                                                                                          df_calculated_area_35C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+
+        # Base 45C
+        df_backcalculate_target_25_base_45 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_25,
+                                                                                                 df_fitting_cycle_45,
+                                                                                                 25,
+                                                                                                 45,
+                                                                                                 df_calculated_area_25C, 
+                                                                                                 df_calculated_area_45C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        
+        df_backcalculate_target_35_base_45 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_35,
+                                                                                                 df_fitting_cycle_45,
+                                                                                                 35,
+                                                                                                 45,
+                                                                                                 df_calculated_area_35C, 
+                                                                                                 df_calculated_area_45C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        df_backcalculate_target_55_base_45 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_55,
+                                                                                                 df_fitting_cycle_45,
+                                                                                                 55,
+                                                                                                 45,
+                                                                                                 df_calculated_area_55C, 
+                                                                                                 df_calculated_area_45C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        # df_backcalculate_target_65_base_45 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_65,
+        #                                                                                          df_fitting_cycle_45,
+        #                                                                                          65,
+        #                                                                                          45,
+        #                                                                                          df_calculated_area_65C, 
+        #                                                                                          df_calculated_area_45C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+        
+        # Base 55C
+        df_backcalculate_target_25_base_55 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_25,
+                                                                                                 df_fitting_cycle_55,
+                                                                                                 25,
+                                                                                                 55,
+                                                                                                 df_calculated_area_25C, 
+                                                                                                 df_calculated_area_55C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        df_backcalculate_target_35_base_55 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_35,
+                                                                                                 df_fitting_cycle_55,
+                                                                                                 35,
+                                                                                                 55,
+                                                                                                 df_calculated_area_35C, 
+                                                                                                 df_calculated_area_55C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        df_backcalculate_target_45_base_55 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_45,
+                                                                                                 df_fitting_cycle_55,
+                                                                                                 45,
+                                                                                                 55,
+                                                                                                 df_calculated_area_45C, 
+                                                                                                 df_calculated_area_55C,
+                                                                                                 batch_name,
+                                                                                                 desired_foldername)
+        
+        # df_backcalculate_target_65_base_55 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_65,
+        #                                                                                          df_fitting_cycle_55,
+        #                                                                                          65,
+        #                                                                                          55,
+        #                                                                                          df_calculated_area_65C, 
+        #                                                                                          df_calculated_area_55C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+        
+        # base 65
+        # df_backcalculate_target_25_base_65 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_25,
+        #                                                                                          df_fitting_cycle_65,
+        #                                                                                          25,
+        #                                                                                          65,
+        #                                                                                          df_calculated_area_25C, 
+        #                                                                                          df_calculated_area_65C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+        
+        # df_backcalculate_target_35_base_65 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_35,
+        #                                                                                          df_fitting_cycle_65,
+        #                                                                                          35,
+        #                                                                                          65,
+        #                                                                                          df_calculated_area_35C, 
+        #                                                                                          df_calculated_area_65C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+        
+        # df_backcalculate_target_45_base_65 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_45,
+        #                                                                                          df_fitting_cycle_65,
+        #                                                                                          45,
+        #                                                                                          65,
+        #                                                                                          df_calculated_area_45C, 
+        #                                                                                          df_calculated_area_65C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+        
+        # df_backcalculate_target_55_base_65 = calculate_equivalent_time_using_actual_data_notNorm_v2(df_fitting_cycle_55,
+        #                                                                                          df_fitting_cycle_65,
+        #                                                                                          55,
+        #                                                                                          65,
+        #                                                                                          df_calculated_area_55C, 
+        #                                                                                          df_calculated_area_65C,
+        #                                                                                          batch_name,
+        #                                                                                          desired_foldername)
+        
+        # Create dictionary for all the results
+        df_backcalculation = {
+            'batch_name':batch_name,
+            'backcalculate_target_35_base_25': df_backcalculate_target_35_base_25,
+            'backcalculate_target_45_base_25': df_backcalculate_target_45_base_25,
+            'backcalculate_target_55_base_25': df_backcalculate_target_55_base_25,
+            # 'backcalculate_target_65_base_25': df_backcalculate_target_65_base_25,
+            ######################################################################
+            'backcalculate_target_25_base_35': df_backcalculate_target_25_base_35,
+            'backcalculate_target_45_base_35': df_backcalculate_target_45_base_35,
+            'backcalculate_target_55_base_35': df_backcalculate_target_55_base_35,
+            # 'backcalculate_target_65_base_35': df_backcalculate_target_65_base_35,
+            ######################################################################
+            'backcalculate_target_25_base_45': df_backcalculate_target_25_base_45,
+            'backcalculate_target_35_base_45': df_backcalculate_target_35_base_45,
+            'backcalculate_target_55_base_45': df_backcalculate_target_55_base_45,
+            # 'backcalculate_target_65_base_45': df_backcalculate_target_65_base_45,
+            ######################################################################
+            'backcalculate_target_25_base_55': df_backcalculate_target_25_base_55,
+            'backcalculate_target_35_base_55': df_backcalculate_target_35_base_55,
+            'backcalculate_target_45_base_55': df_backcalculate_target_45_base_55,
+            # 'backcalculate_target_65_base_55': df_backcalculate_target_65_base_55,
+            ######################################################################
+            # 'backcalculate_target_25_base_65': df_backcalculate_target_25_base_65,
+            # 'backcalculate_target_35_base_65': df_backcalculate_target_35_base_65,
+            # 'backcalculate_target_45_base_65': df_backcalculate_target_45_base_65,
+            # 'backcalculate_target_55_base_65': df_backcalculate_target_55_base_65,
+            }
+        
+        # Append to list
+        list_all_backcalculations.append(df_backcalculation)
+    
+    return(list_all_backcalculations)
 
 def run_calculate_equivalent_time_all_batches_cumSum_actualValue(batch_fitting_notNorm, desired_foldername): 
     
@@ -6105,161 +4780,327 @@ def run_calculate_equivalent_time_all_batches_cumSum_actualValue(batch_fitting_n
 #%% 
 # Running code: loading all parameters
 
-# For the 25C (new data, Yanyan)
-cell_params_25C = {0 : [0,'SAM'], 
-                    1 : [0,'SAM'],
-                    2 : [0,'SAM'], 
-                    3 : [0,'SAM'], 
-                    4 : [0,'SAM'], 
-                    5 : [0,'SAM'], 
-                    6 : [0,'SAM'], 
-                    7 : [0,'SAM']} 
-
-# For the 35C (new data, yanyan)
-cell_params_35C = {0 : [0,'SAM'], 
-                    1 : [0,'SAM'],
-                    2 : [0,'SAM'], 
-                    3 : [0,'SAM'], 
-                    4 : [0,'SAM'], 
-                    5 : [0,'SAM'], 
-                    6 : [0,'SAM'], 
-                    7 : [0,'SAM']} 
-
-# For the 45C (new data, yanyan)
-cell_params_45C = {0 : [0,'SAM'], 
-                    1 : [0,'SAM'],
-                    2 : [0,'SAM'], 
-                    3 : [0,'SAM'], 
-                    4 : [0,'SAM'], 
-                    5 : [0,'SAM'], 
-                    6 : [0,'SAM'], 
-                    7 : [0,'SAM']} 
-
-# For the 55C (new data, yanyan)
-cell_params_55C = {0 : [0,'SAM'], 
-                    1 : [0,'SAM'],
-                    2 : [0,'SAM'], 
-                    3 : [0,'SAM'], 
-                    4 : [0,'SAM'], 
-                    5 : [0,'SAM'], 
-                    6 : [0,'SAM'], 
-                    7 : [0,'SAM']} 
-
-# For the 65C (new data, yanyan)
-cell_params_65C = {0 : [0,'SAM'], 
-                    1 : [0,'SAM'],
-                    2 : [0,'SAM'], 
-                    3 : [0,'SAM'], 
-                    4 : [0,'SAM'], 
-                    5 : [0,'SAM'], 
-                    6 : [0,'SAM'], 
-                    7 : [0,'SAM']} 
-
-path_25C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_25C/"
-path_35C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_35C/"
-path_45C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_45C/"
-path_55C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_55C/"
-path_65C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_65C/"
-
-# Other parameters
-limit_h_25C = 1848 #1200
-limit_h_35C = 1200 # 2000 #400
-limit_h_45C = 453 # 600
-limit_h_55C = 315 #2000
-limit_h_65C = 167.25 #800
+# Batch name 
+batchname = 'SAM'# Yanyan batch new (Antonio-x), high efficiency
+# batchname = 'NiOx-SAM' # Zahra-Batch1
 
 # Folder run name
 folder_run_name = '/20260706_run_SAM_Yanyan_with04py/'
 
-# Look at the current working directory
-print('Current working directory: ',os.getcwd())
+batchname_list = [batchname]
 
-# Create folder if not exists yet
-if not os.path.exists('figures/'+folder_run_name):
-    os.makedirs('figures/'+folder_run_name)
+if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
+
+    # For the 25C (new data, Yanyan)
+    cell_params_25C = {0 : [0,'SAM'], 
+                        1 : [0,'SAM'],
+                        2 : [0,'SAM'], 
+                        3 : [0,'SAM'], 
+                        4 : [0,'SAM'], 
+                        5 : [0,'SAM'], 
+                        6 : [0,'SAM'], 
+                        7 : [0,'SAM']} 
+
+    # For the 35C (new data, yanyan)
+    cell_params_35C = {0 : [0,'SAM'], 
+                        1 : [0,'SAM'],
+                        2 : [0,'SAM'], 
+                        3 : [0,'SAM'], 
+                        4 : [0,'SAM'], 
+                        5 : [0,'SAM'], 
+                        6 : [0,'SAM'], 
+                        7 : [0,'SAM']} 
+
+    # For the 45C (new data, yanyan)
+    cell_params_45C = {0 : [0,'SAM'], 
+                        1 : [0,'SAM'],
+                        2 : [0,'SAM'], 
+                        3 : [0,'SAM'], 
+                        4 : [0,'SAM'], 
+                        5 : [0,'SAM'], 
+                        6 : [0,'SAM'], 
+                        7 : [0,'SAM']} 
+
+    # For the 55C (new data, yanyan)
+    cell_params_55C = {0 : [0,'SAM'], 
+                        1 : [0,'SAM'],
+                        2 : [0,'SAM'], 
+                        3 : [0,'SAM'], 
+                        4 : [0,'SAM'], 
+                        5 : [0,'SAM'], 
+                        6 : [0,'SAM'], 
+                        7 : [0,'SAM']} 
+
+    # For the 65C (new data, yanyan)
+    cell_params_65C = {0 : [0,'SAM'], 
+                        1 : [0,'SAM'],
+                        2 : [0,'SAM'], 
+                        3 : [0,'SAM'], 
+                        4 : [0,'SAM'], 
+                        5 : [0,'SAM'], 
+                        6 : [0,'SAM'], 
+                        7 : [0,'SAM']} 
+
+    path_25C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_25C/"
+    path_35C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_35C/"
+    path_45C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_45C/"
+    path_55C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_55C/"
+    path_65C = "/20250924_newSetData/dataset_SAM/MPPT_filtered_65C/"
+
+    # Other parameters
+    limit_h_25C = 1848 #1200
+    limit_h_35C = 1200 # 2000 #400
+    limit_h_45C = 453 # 600
+    limit_h_55C = 315 #2000
+    limit_h_65C = 167.25 #800
+
+    # Look at the current working directory
+    print('Current working directory: ',os.getcwd())
+
+    # Create folder if not exists yet
+    if not os.path.exists('figures/'+folder_run_name):
+        os.makedirs('figures/'+folder_run_name)
+        
+    sns.set_style(style=None)
+
+elif batchname == 'NiOx-SAM': # SAM-based: Ulas, NiOx-based: Zahra-Batch2, NiOx-SAM: Zahra-Batch1
+
+    # SAM-based: Ulas, NiOx-based: Zahra-Batch2
+    # For the 25C
+    cell_params_25C = {0: [0, 'NiOx-SAM'], # NiOx-SAM-based
+                        # 1: [1, 'Zahra-Batch2'], # NiOx-based
+                        # 2: [1, 'Zahra-Batch2'], # NiOx-based
+                        3: [0, 'NiOx-SAM'], # NiOx-SAM-based
+                        # 4: [2, 'Ulas'], # SAM-based
+                        # 5: [2, 'Ulas'], # SAM-based
+                        # 6: [2, 'Ulas'], # SAM-based 
+                        # 7: [2, 'Ulas'],
+                        } # SAM-based
+
+    # For the 35C (old data)
+    # cell_params_35C = {4: [0, 'Zahra-Batch1'], # NiOx-SAM-based
+    #                     5: [1, 'Zahra-Batch2'], # NiOx-based
+    #                     6: [1, 'Zahra-Batch2'], # NiOx-based
+    #                     7: [0, 'Zahra-Batch1'], # NiOx-SAM-based
+    #                     0: [2, 'Ulas'], # SAM-based
+    #                     1: [2, 'Ulas'], # SAM-based
+    #                     2: [2, 'Ulas'], # SAM-based 
+    #                     3: [2, 'Ulas']} # SAM-based
+
+    # For the 35C (new data, 2020511)
+    cell_params_35C = {4: [0, 'NiOx-SAM'], # NiOx-SAM-based
+                        5: [0, 'NiOx-SAM'], # NiOx-SAM-based
+                        # 6: [1, 'Zahra-Batch2'], # NiOx-based
+                        # 7: [1, 'Zahra-Batch2'], # NiOx-based
+                        # 0: [2, 'Ulas'], # SAM-based
+                        # 1: [2, 'Ulas'], # SAM-based
+                        # 2: [2, 'Ulas'], # SAM-based 
+                        # 3: [2, 'Ulas'],
+                        } # SAM-based
+
+    # For the 45C
+    cell_params_45C = {0 : [0,'NiOx-SAM'], # NiOx-SAM-based
+                        # 1 : [1,'Zahra-Batch2'], # NiOx-based
+                        # 2 : [1,'Zahra-Batch2'], # NiOx-based
+                        3 : [0,'NiOx-SAM'], # NiOx-SAM-based
+                        # 4 : [2,'Ulas'], # SAM-based
+                        # 5 : [2,'Ulas'], # SAM-based
+                        # 6 : [2,'Ulas'], # SAM-based
+                        # 7 : [2,'Ulas'],
+                        } # SAM-based
+
+    # For the 55C
+    cell_params_55C = {0 : [0,'NiOx-SAM'], # NiOx-SAM-based
+                        # 1 : [1,'Zahra-Batch2'], # NiOx-based
+                        # 2 : [1,'Zahra-Batch2'], # NiOx-based
+                        3 : [0,'NiOx-SAM'], # NiOx-SAM-based
+                        # 4 : [2,'Ulas'], # SAM-based
+                        # 5 : [2,'Ulas'], # SAM-based
+                        # 6 : [2,'Ulas'], # SAM-based
+                        # 7 : [2,'Ulas'],
+                        } # SAM-based
     
-sns.set_style(style=None)
+    path_25C = "/acceleratedcycle_script/dataset/MPPT_filtered_25C/"
+    path_35C = "/acceleratedcycle_script/dataset/MPPT_filtered_35C/" # 20250511, only new data
+    path_45C = "/acceleratedcycle_script/dataset/MPPT_filtered_45C/"
+    path_55C = "/acceleratedcycle_script/dataset/MPPT_filtered_55C/"
+
+    # Other parameters
+    limit_h_25C = 1200
+    limit_h_35C = 1900 #400
+    limit_h_45C = 1200
+    limit_h_55C = 1200
+
+    # Folder run name
+    folder_run_name = '/20260625_20240511_rerun/'
+
+    # Look at the current working directory
+    print('Current working directory: ',os.getcwd())
+
+    # Create folder if not exists yet
+    if not os.path.exists('figures/'+folder_run_name):
+        os.makedirs('figures/'+folder_run_name)
+        
+    sns.set_style(style=None)
     
 
 #%% 
 # Running code: load data, calculate area per cycle & statistics
 
-# Load data from the folders into df
-df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C = run_load_data_python_allTs(path_25C, 
-                                                                                        path_35C, 
-                                                                                        path_45C, 
-                                                                                        path_55C, 
-                                                                                        path_65C, 
-                                                                                        cell_params_25C, cell_params_35C, cell_params_45C,
-                                                                                        cell_params_55C, cell_params_65C,
-                                                                                        limit_h_25C, limit_h_35C, limit_h_45C,
-                                                                                        limit_h_55C, limit_h_65C)
+if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
 
-# Calculate area per cycle
-df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area, df_all_65C_area, df_all_25C_35C_45C_55C_65C_area =  run_calculate_area_allTs(df_all_25C,
-                                                                                                                                             df_all_35C,
-                                                                                                                                             df_all_45C,
-                                                                                                                                             df_all_55C,
-                                                                                                                                             df_all_65C)
+    # Load data from the folders into df
+    df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C = run_load_data_python_allTs(path_25C, 
+                                                                                            path_35C, 
+                                                                                            path_45C, 
+                                                                                            path_55C, 
+                                                                                            path_65C, 
+                                                                                            cell_params_25C, cell_params_35C, cell_params_45C,
+                                                                                            cell_params_55C, cell_params_65C,
+                                                                                            limit_h_25C, limit_h_35C, limit_h_45C,
+                                                                                            limit_h_55C, limit_h_65C)
 
-# # Calculate area statistics
-df_stats_25C, df_stats_35C, df_stats_45C, df_stats_55C, df_stats_65C, df_all_stats = run_calculate_area_stats_allTs(df_all_25C_area, 
-                                                                                                                    df_all_35C_area, 
-                                                                                                                    df_all_45C_area,
-                                                                                                                    df_all_55C_area,
-                                                                                                                    df_all_65C_area)
-      
+    # Calculate area per cycle
+    df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area, df_all_65C_area, df_all_25C_35C_45C_55C_65C_area =  run_calculate_area_allTs(df_all_25C,
+                                                                                                                                                df_all_35C,
+                                                                                                                                                df_all_45C,
+                                                                                                                                                df_all_55C,
+                                                                                                                                                df_all_65C)
+
+    # # Calculate area statistics
+    df_stats_25C, df_stats_35C, df_stats_45C, df_stats_55C, df_stats_65C, df_all_stats = run_calculate_area_stats_allTs(df_all_25C_area, 
+                                                                                                                        df_all_35C_area, 
+                                                                                                                        df_all_45C_area,
+                                                                                                                        df_all_55C_area,
+                                                                                                                        df_all_65C_area)
+
+elif batchname == 'NiOx-SAM': # SAM-based: Ulas, NiOx-based: Zahra-Batch2, NiOx-SAM: Zahra-Batch1
+
+    # Load data from the folders into df
+    df_all_25C, df_all_35C, df_all_45C, df_all_55C = run_load_data_python_allTs_no65C(path_25C, 
+                                                                                      path_35C, 
+                                                                                      path_45C, 
+                                                                                      path_55C, 
+                                                                                      # path_65C, 
+                                                                                      cell_params_25C, cell_params_35C, cell_params_45C,
+                                                                                      cell_params_55C, 
+                                                                                      # cell_params_65C,
+                                                                                      limit_h_25C, limit_h_35C, limit_h_45C,
+                                                                                      limit_h_55C, 
+                                                                                      # limit_h_65C,
+                                                                                      )
+
+    # Calculate area per cycle
+    df_all_25C_area, df_all_35C_area, df_all_45C_area, df_all_55C_area, df_all_25C_35C_45C_55C_area =  run_calculate_area_allTs_no65C(df_all_25C,
+                                                                                                                                      df_all_35C,
+                                                                                                                                      df_all_45C,
+                                                                                                                                      df_all_55C,
+                                                                                                                                      # df_all_65C,
+                                                                                                                                      )
+
+    # # Calculate area statistics
+    df_stats_25C, df_stats_35C, df_stats_45C, df_stats_55C, df_all_stats = run_calculate_area_stats_allTs_no65C(df_all_25C_area,
+                                                                                                                df_all_35C_area,
+                                                                                                                df_all_45C_area,
+                                                                                                                df_all_55C_area,
+                                                                                                                # df_all_65C_area,
+                                                                                                                )
+
 
 #%% 
 # Running code: regression of main parameters + arrhenius fitting
 
-# Clear figures
-plt.close()
-sns.set_style(style=None)
+if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
 
-# Go through for a specific T and specific batch
-calculate_regression_specificT_specificBatch_no35C(df_all_25C_area,
-                                             df_all_45C_area,
-                                             df_all_55C_area,
-                                             df_all_65C_area,
-                                             'specific_batch')
+    # Clear figures
+    plt.close()
+    sns.set_style(style=None)
 
-calculate_regression_specificT_specificBatch_no35C(df_all_25C_area, 
-                                             df_all_45C_area, 
-                                             df_all_55C_area, 
-                                             df_all_65C_area,
-                                             'all_batches')
+    # Go through for a specific T and specific batch
+    calculate_regression_specificT_specificBatch_no35C(df_all_25C_area,
+                                                df_all_45C_area,
+                                                df_all_55C_area,
+                                                df_all_65C_area,
+                                                'specific_batch')
 
-df_all_25C_45C_55C_65C_area = (pd.concat([df_all_25C_area,
-                                          df_all_45C_area, 
-                                          df_all_55C_area, 
-                                          df_all_65C_area])).reset_index(drop=True)
+    calculate_regression_specificT_specificBatch_no35C(df_all_25C_area, 
+                                                df_all_45C_area, 
+                                                df_all_55C_area, 
+                                                df_all_65C_area,
+                                                'all_batches')
 
-# Regression for fitting each pixel
-df_fitting = calculate_regression_eachpixel(df_all_25C_45C_55C_65C_area)
+    df_all_25C_45C_55C_65C_area = (pd.concat([df_all_25C_area,
+                                            df_all_45C_area, 
+                                            df_all_55C_area, 
+                                            df_all_65C_area])).reset_index(drop=True)
 
-# Calculate median, fit arrhenius
-calculate_median_slope_arrhenius(df_fitting)
+    # Regression for fitting each pixel
+    df_fitting = calculate_regression_eachpixel(df_all_25C_45C_55C_65C_area)
 
-# Calculate median, fit arrhenius with unifor ylim
-calculate_median_slope_arrhenius_ylim(df_fitting)
+    # Calculate median, fit arrhenius
+    calculate_median_slope_arrhenius(df_fitting)
 
-# Doing regression on arrhenius plot
-df_regression_arrhenius = regression_arrhenius(df_fitting)
+    # Calculate median, fit arrhenius with unifor ylim
+    calculate_median_slope_arrhenius_ylim(df_fitting)
+
+    # Doing regression on arrhenius plot
+    df_regression_arrhenius = regression_arrhenius(df_fitting)
+
+elif batchname == 'NiOx-SAM': # SAM-based: Ulas, NiOx-based: Zahra-Batch2, NiOx-SAM: Zahra-Batch1
+
+    # Clear figures
+    plt.close()
+    sns.set_style(style=None)
+
+    # Go through for a specific T and specific batch
+    calculate_regression_specificT_specificBatch_no65C(df_all_25C_area,
+                                                      df_all_35C_area,
+                                                      df_all_45C_area,
+                                                      df_all_55C_area,
+                                                      # df_all_65C_area,
+                                                      'specific_batch')
+
+    calculate_regression_specificT_specificBatch_no65C(df_all_25C_area, 
+                                                       df_all_35C_area,
+                                                       df_all_45C_area, 
+                                                       df_all_55C_area, 
+                                                       # df_all_65C_area,
+                                                       'all_batches')
+
+
+    # Regression for fitting each pixel
+    df_fitting = calculate_regression_eachpixel(df_all_25C_35C_45C_55C_area)
+
+    # Calculate median, fit arrhenius
+    calculate_median_slope_arrhenius(df_fitting)
+
+    # Calculate median, fit arrhenius with unifor ylim
+    calculate_median_slope_arrhenius_ylim(df_fitting)
+
+    # Doing regression on arrhenius plot
+    df_regression_arrhenius = regression_arrhenius(df_fitting)
 
 
 #%% 
 # Running code: find comparable area across different T for specific batch
 
-sns.set_style(style=None)
+if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
+    sns.set_style(style=None)
 
-# For not normalized
-batch_fitting_notNorm = fit_aging_cycle_function_notNorm(df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C)
+    # For not normalized
+    batch_fitting_notNorm = fit_aging_cycle_function_notNorm(df_all_25C, df_all_35C, df_all_45C, df_all_55C, df_all_65C)
+
+elif batchname == 'NiOx-SAM': # SAM-based: Ulas, NiOx-based: Zahra-Batch2, NiOx-SAM: Zahra-Batch1
+    sns.set_style(style=None)
+
+    # For not normalized
+    batch_fitting_notNorm = fit_aging_cycle_function_notNorm_no65C(df_all_25C, df_all_35C, df_all_45C, df_all_55C)
 
 
-#%% 
+ #%% 
 # Running code: read all the dfs, decide which one is the best
 
+# if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
 folder_path = 'figures/'+folder_run_name+'cycle_fitting_notNorm/'
 
 # Create an empty dictionary to store DataFrames
@@ -6304,13 +5145,20 @@ highest_indices = result_df.idxmax()
 
 # Create a new row with the highest indices for each column
 result_df.loc["highest_index"] = highest_indices
+
+
         
 #%% 
 # Running code: all backcalculations (using fitted equation)
 
-sns.set_style(style=None)
-list_all_backcalculations_notNorm = run_calculate_equivalent_time_all_batches_notNorm_v2_inc65C(batch_fitting_notNorm, 'backcalculate_notNorm/')
-        
+if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
+    sns.set_style(style=None)
+    list_all_backcalculations_notNorm = run_calculate_equivalent_time_all_batches_notNorm_v2_inc65C(batch_fitting_notNorm, 'backcalculate_notNorm/')
+
+elif batchname == 'NiOx-SAM': # SAM-based: Ulas, NiOx-based: Zahra-Batch2, NiOx-SAM: Zahra-Batch1
+    sns.set_style(style=None)
+    list_all_backcalculations_notNorm = run_calculate_equivalent_time_all_batches_notNorm_v2_no65C(batch_fitting_notNorm, 'backcalculate_notNorm/')
+         
 #%% 
 # Running code: plot the boxplot of the backcalculation not norm  FOR 25, 45, 55, 65C + FITTING THE MEDIAN
 
@@ -6340,9 +5188,8 @@ palette = sns.color_palette("deep", 3)
 #                 'Zahra-Batch1':palette[1],
 #                 'Zahra-Batch2':palette[2]}
 
-length_base = {25:12,45:3,55:1.5, 65:0.75}#35:6,
 
-desired_foldername='backcalculate_notNorm_no35C/'
+desired_foldername='backcalculate_notNorm/'
 os.makedirs("figures/"+folder_run_name+desired_foldername, exist_ok=True)
 
 # List to add
@@ -6352,164 +5199,333 @@ a_fit_list = []
 b_fit_list = []
 r_squared_list = []
 
-for i in range(len(list_all_backcalculations_notNorm)):
-    
-    specific_batch_df = list_all_backcalculations_notNorm[i]
-    
-    # Filter out anything containing 35
-    specific_batch_df = {key: value for key, value in specific_batch_df.items() if 'target_35' not in key and 'base_35' not in key}
-    
-    batch_name = specific_batch_df['batch_name']
-    print(batch_name)
-    
-    # List all the temperatures
-    base_T_C = [25,45,55, 65] #35
-    base_T_K = [x + 273 for x in base_T_C]
-    
-    
-    for base_T in base_T_C:
+if batchname == 'SAM': # Yanyan batch new (Antonio-x), high efficiency
+
+    length_base = {25:12,45:3,55:1.5, 65:0.75}#35:6,
+
+    for i in range(len(list_all_backcalculations_notNorm)):
         
-        try:
+        specific_batch_df = list_all_backcalculations_notNorm[i]
         
-            # List to store keys ending with "_base_<T>"
-            keys_ending_with_base_T = [key for key in specific_batch_df.keys() if key.endswith('_base_'+str(base_T))]
-            print(keys_ending_with_base_T)
+        # Filter out anything containing 35
+        specific_batch_df = {key: value for key, value in specific_batch_df.items() if 'target_35' not in key and 'base_35' not in key}
+        
+        batch_name = specific_batch_df['batch_name']
+        print(batch_name)
+        
+        # List all the temperatures
+        base_T_C = [25,45,55, 65] #35
+        base_T_K = [x + 273 for x in base_T_C]
+        
+        
+        for base_T in base_T_C:
             
-            # Find temperatures not in base_T     
-            # Create a new list containing elements after the selected element
-            non_base_T_C = [x for x in base_T_C if x != base_T]
-            print(non_base_T_C)
+            try:
             
-            # Create a dataframe
-            df_interest_plot = pd.DataFrame(columns=['eq_time', 'T_C'])
-            df_interest_plot.loc[0] = [length_base[base_T],base_T] # Add the base temperature
-            
-            # Going through each T and calculate the equivalent time
-            for key_ending_base_T,non_base_T_C_specific in zip(keys_ending_with_base_T,non_base_T_C):
-                specific_base_T_df = specific_batch_df[key_ending_base_T]#[0]
+                # List to store keys ending with "_base_<T>"
+                keys_ending_with_base_T = [key for key in specific_batch_df.keys() if key.endswith('_base_'+str(base_T))]
+                print(keys_ending_with_base_T)
                 
-                print(key_ending_base_T,non_base_T_C_specific,base_T)
-                column_interest = 'eq_'+str(non_base_T_C_specific)+'C_wrt_'+str(base_T)+'C_time_linear_log'
+                # Find temperatures not in base_T     
+                # Create a new list containing elements after the selected element
+                non_base_T_C = [x for x in base_T_C if x != base_T]
+                print(non_base_T_C)
                 
-                df_interest_plot_specific=(specific_base_T_df[0].to_frame()).dropna()
-                df_interest_plot_specific = df_interest_plot_specific.rename(columns={column_interest:'eq_time'})
-                df_interest_plot_specific['T_C']=non_base_T_C_specific
+                # Create a dataframe
+                df_interest_plot = pd.DataFrame(columns=['eq_time', 'T_C'])
+                df_interest_plot.loc[0] = [length_base[base_T],base_T] # Add the base temperature
                 
-                df_interest_plot = pd.concat([df_interest_plot, df_interest_plot_specific], ignore_index=True)
+                # Going through each T and calculate the equivalent time
+                for key_ending_base_T,non_base_T_C_specific in zip(keys_ending_with_base_T,non_base_T_C):
+                    specific_base_T_df = specific_batch_df[key_ending_base_T]#[0]
+                    
+                    print(key_ending_base_T,non_base_T_C_specific,base_T)
+                    column_interest = 'eq_'+str(non_base_T_C_specific)+'C_wrt_'+str(base_T)+'C_time_linear_log'
+                    
+                    df_interest_plot_specific=(specific_base_T_df[0].to_frame()).dropna()
+                    df_interest_plot_specific = df_interest_plot_specific.rename(columns={column_interest:'eq_time'})
+                    df_interest_plot_specific['T_C']=non_base_T_C_specific
+                    
+                    df_interest_plot = pd.concat([df_interest_plot, df_interest_plot_specific], ignore_index=True)
+                    
+                # Now trying to fit
                 
-            # Now trying to fit
-            
-            # Finding the median of 'eq_time' for each unique value of 'T_C'
-            median_data = df_interest_plot.groupby('T_C')['eq_time'].median().reset_index()
-            percentile_25th = df_interest_plot.groupby('T_C')['eq_time'].quantile(0.25).reset_index()
-            percentile_75th = df_interest_plot.groupby('T_C')['eq_time'].quantile(0.75).reset_index()
-            
-            # Creating a new DataFrame with the median values
-            median_data_df = pd.DataFrame(median_data, columns=['T_C', 'eq_time'])
-            
-            # Fitting the exponential decay function to the data
-            a_fit, b_fit = exp_fit_T_eqTime(median_data_df['T_C'], median_data_df['eq_time'])
-            
-            # Generating the fitted curve
-            x_fit = np.linspace(20,70,100)
-            y_fit = exp_func_T_eqTime(x_fit, a_fit, b_fit)
-            
-            x_fit_short = np.array((25,45,55,65)) #35
-            y_fit_short = exp_func_T_eqTime(x_fit_short, a_fit, b_fit)
-            
-            
-            # Calculating the total sum y_fit squares and residual sum of squares
-            ss_res = np.sum(( median_data_df['eq_time'] - y_fit_short) ** 2)
-            ss_tot = np.sum(( median_data_df['eq_time'] - np.mean(y_fit_short)) ** 2)
-            
-            # # Calculating R-squared
-            r_squared_calc = 1 - (ss_res / ss_tot)
-            
-            # Start plotting figure
-            # plt.close()
-            plt.figure(figsize=(2.5,3),dpi=300)
-            # fig, ax = plt.subplots(figsize=(4,3),dpi=300)
-            
-            sns.scatterplot(data=median_data_df,x='T_C',y='eq_time')
-            sns.lineplot(x=x_fit,y=y_fit, color='red',label='Exponential fit')
-            
-            
-            # Extract values from percentile DataFrames
-            lower_error = median_data_df['eq_time'] - percentile_25th['eq_time']
-            upper_error = percentile_75th['eq_time'] - median_data_df['eq_time']
-            
-            # Adding error bars
-            plt.errorbar(median_data_df['T_C'], median_data_df['eq_time'], yerr=[lower_error, upper_error], fmt='o', capsize=3, capthick=1, elinewidth=1)
+                # Finding the median of 'eq_time' for each unique value of 'T_C'
+                median_data = df_interest_plot.groupby('T_C')['eq_time'].median().reset_index()
+                percentile_25th = df_interest_plot.groupby('T_C')['eq_time'].quantile(0.25).reset_index()
+                percentile_75th = df_interest_plot.groupby('T_C')['eq_time'].quantile(0.75).reset_index()
+                
+                # Creating a new DataFrame with the median values
+                median_data_df = pd.DataFrame(median_data, columns=['T_C', 'eq_time'])
+                
+                # Fitting the exponential decay function to the data
+                a_fit, b_fit = exp_fit_T_eqTime(median_data_df['T_C'], median_data_df['eq_time'])
+                
+                # Generating the fitted curve
+                x_fit = np.linspace(20,70,100)
+                y_fit = exp_func_T_eqTime(x_fit, a_fit, b_fit)
+                
+                x_fit_short = np.array((25,45,55,65)) #35
+                y_fit_short = exp_func_T_eqTime(x_fit_short, a_fit, b_fit)
+                
+                
+                # Calculating the total sum y_fit squares and residual sum of squares
+                ss_res = np.sum(( median_data_df['eq_time'] - y_fit_short) ** 2)
+                ss_tot = np.sum(( median_data_df['eq_time'] - np.mean(y_fit_short)) ** 2)
+                
+                # # Calculating R-squared
+                r_squared_calc = 1 - (ss_res / ss_tot)
+                
+                # Start plotting figure
+                # plt.close()
+                plt.figure(figsize=(2.5,3),dpi=300)
+                # fig, ax = plt.subplots(figsize=(4,3),dpi=300)
+                
+                sns.scatterplot(data=median_data_df,x='T_C',y='eq_time')
+                sns.lineplot(x=x_fit,y=y_fit, color='red',label='Exponential fit')
+                
+                
+                # Extract values from percentile DataFrames
+                lower_error = median_data_df['eq_time'] - percentile_25th['eq_time']
+                upper_error = percentile_75th['eq_time'] - median_data_df['eq_time']
+                
+                # Adding error bars
+                plt.errorbar(median_data_df['T_C'], median_data_df['eq_time'], yerr=[lower_error, upper_error], fmt='o', capsize=3, capthick=1, elinewidth=1)
 
-            plt.legend().remove()            
-            plt.tight_layout()
-            
-            plt.savefig("figures/"+folder_run_name+desired_foldername+"scatterplot_temperature_equivalent_notNorm_no35C_"+
-                        batch_name+"_base_"+str(base_T)+".png",
-                        dpi=300)
-            
-            # Add list
-            batch_name_list.append(batch_name)
-            base_T_list.append(base_T)
-            a_fit_list.append(a_fit)
-            b_fit_list.append(b_fit)
-            r_squared_list.append(r_squared_calc)
-            
+                plt.legend().remove()            
+                plt.tight_layout()
+                
+                plt.savefig("figures/"+folder_run_name+desired_foldername+"scatterplot_temperature_equivalent_notNorm_no35C_"+
+                            batch_name+"_base_"+str(base_T)+".png",
+                            dpi=300)
+                
+                # Add list
+                batch_name_list.append(batch_name)
+                base_T_list.append(base_T)
+                a_fit_list.append(a_fit)
+                b_fit_list.append(b_fit)
+                r_squared_list.append(r_squared_calc)
+                
 
-            # Start plotting figure with ylim
-            # plt.close()
-            plt.figure(figsize=(2.5,3),dpi=300)
-            
-            sns.scatterplot(data=median_data_df,x='T_C',y='eq_time')
-            sns.lineplot(x=x_fit,y=y_fit, color='red',label='Exponential fit')
-            
-            # Extract values from percentile DataFrames
-            lower_error = median_data_df['eq_time'] - percentile_25th['eq_time']
-            upper_error = percentile_75th['eq_time'] - median_data_df['eq_time']
-            
-            # Adding error bars
-            plt.errorbar(median_data_df['T_C'], median_data_df['eq_time'], yerr=[lower_error, upper_error], fmt='o', capsize=3, capthick=1, elinewidth=1)
+                # Start plotting figure with ylim
+                # plt.close()
+                plt.figure(figsize=(2.5,3),dpi=300)
+                
+                sns.scatterplot(data=median_data_df,x='T_C',y='eq_time')
+                sns.lineplot(x=x_fit,y=y_fit, color='red',label='Exponential fit')
+                
+                # Extract values from percentile DataFrames
+                lower_error = median_data_df['eq_time'] - percentile_25th['eq_time']
+                upper_error = percentile_75th['eq_time'] - median_data_df['eq_time']
+                
+                # Adding error bars
+                plt.errorbar(median_data_df['T_C'], median_data_df['eq_time'], yerr=[lower_error, upper_error], fmt='o', capsize=3, capthick=1, elinewidth=1)
 
-            # Add ylim
-            if batch_name == 'SAM':
-                plt.ylim(-1,15)
+                # Add ylim
+                if batch_name == 'SAM':
+                    plt.ylim(-1,15)
 
-            plt.legend().remove()            
-            plt.tight_layout()
-            
-            plt.savefig("figures/"+folder_run_name+desired_foldername+"scatterplot_temperature_equivalent_notNorm_no35C_ylim_"+
-                        batch_name+"_base_"+str(base_T)+".png",
-                        dpi=300)
-                        
-            
-        except:
-            print(f'{column_interest} error!')
-            break
+                plt.legend().remove()            
+                plt.tight_layout()
+                
+                plt.savefig("figures/"+folder_run_name+desired_foldername+"scatterplot_temperature_equivalent_notNorm_no35C_ylim_"+
+                            batch_name+"_base_"+str(base_T)+".png",
+                            dpi=300)
+                            
+                
+            except:
+                print(f'{column_interest} error!')
+                break
 
-# Create dataframe from all the data
-dict_df = {
-    'batch_name': batch_name_list,
-    'base_T_C': base_T_list,
-    'a_fit': a_fit_list,
-    'b_fit': b_fit_list,
-    'r_squared': r_squared_list,
-    }
+    # Create dataframe from all the data
+    dict_df = {
+        'batch_name': batch_name_list,
+        'base_T_C': base_T_list,
+        'a_fit': a_fit_list,
+        'b_fit': b_fit_list,
+        'r_squared': r_squared_list,
+        }
 
-result_fitting_eq_time_df = pd.DataFrame(dict_df)
+    result_fitting_eq_time_df = pd.DataFrame(dict_df)
 
-# Now calculate for 25C vs 55C, and acceleration factors?
-result_fitting_eq_time_df['25C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(25*result_fitting_eq_time_df['b_fit'])
-result_fitting_eq_time_df['35C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(35*result_fitting_eq_time_df['b_fit'])
-result_fitting_eq_time_df['55C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(55*result_fitting_eq_time_df['b_fit'])
-result_fitting_eq_time_df['65C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(65*result_fitting_eq_time_df['b_fit'])
-result_fitting_eq_time_df['acceleration_factor_25C_55C']=result_fitting_eq_time_df['25C_eq_time']/result_fitting_eq_time_df['55C_eq_time']
-result_fitting_eq_time_df['acceleration_factor_25C_65C']=result_fitting_eq_time_df['25C_eq_time']/result_fitting_eq_time_df['65C_eq_time']
+    # Now calculate for 25C vs 55C, and acceleration factors?
+    result_fitting_eq_time_df['25C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(25*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['35C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(35*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['55C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(55*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['65C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(65*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['acceleration_factor_25C_55C']=result_fitting_eq_time_df['25C_eq_time']/result_fitting_eq_time_df['55C_eq_time']
+    result_fitting_eq_time_df['acceleration_factor_25C_65C']=result_fitting_eq_time_df['25C_eq_time']/result_fitting_eq_time_df['65C_eq_time']
 
 
-# Save to csv
-result_fitting_eq_time_df.to_csv("figures/"+folder_run_name+desired_foldername+
-                                 "scatterplot_temperature_equivalent_notNorm_fitting_exponential_no35C.csv",
-                          index=False)
+    # Save to csv
+    result_fitting_eq_time_df.to_csv("figures/"+folder_run_name+desired_foldername+
+                                    "scatterplot_temperature_equivalent_notNorm_fitting_exponential_no35C.csv",
+                            index=False)
 
+elif batchname == 'NiOx-SAM': # SAM-based: Ulas, NiOx-based: Zahra-Batch2, NiOx-SAM: Zahra-Batch1
+
+    length_base = {25:12,35:6, 45:3,55:1.5}#, 65:0.75}#35:6,
+
+    for i in range(len(list_all_backcalculations_notNorm)):
+        
+        specific_batch_df = list_all_backcalculations_notNorm[i]
+        
+        # Filter out anything containing 35
+        # specific_batch_df = {key: value for key, value in specific_batch_df.items() if 'target_35' not in key and 'base_35' not in key}
+        
+        batch_name = specific_batch_df['batch_name']
+        print(batch_name)
+        
+        # List all the temperatures
+        base_T_C = [25,35,45,55] #35
+        base_T_K = [x + 273 for x in base_T_C]
+        
+        
+        for base_T in base_T_C:
+            
+            try:
+            
+                # List to store keys ending with "_base_<T>"
+                keys_ending_with_base_T = [key for key in specific_batch_df.keys() if key.endswith('_base_'+str(base_T))]
+                print(keys_ending_with_base_T)
+                
+                # Find temperatures not in base_T     
+                # Create a new list containing elements after the selected element
+                non_base_T_C = [x for x in base_T_C if x != base_T]
+                print(non_base_T_C)
+                
+                # Create a dataframe
+                df_interest_plot = pd.DataFrame(columns=['eq_time', 'T_C'])
+                df_interest_plot.loc[0] = [length_base[base_T],base_T] # Add the base temperature
+                
+                # Going through each T and calculate the equivalent time
+                for key_ending_base_T,non_base_T_C_specific in zip(keys_ending_with_base_T,non_base_T_C):
+                    specific_base_T_df = specific_batch_df[key_ending_base_T]#[0]
+                    
+                    print(key_ending_base_T,non_base_T_C_specific,base_T)
+                    column_interest = 'eq_'+str(non_base_T_C_specific)+'C_wrt_'+str(base_T)+'C_time_linear_log'
+                    
+                    df_interest_plot_specific=(specific_base_T_df[0].to_frame()).dropna()
+                    df_interest_plot_specific = df_interest_plot_specific.rename(columns={column_interest:'eq_time'})
+                    df_interest_plot_specific['T_C']=non_base_T_C_specific
+                    
+                    df_interest_plot = pd.concat([df_interest_plot, df_interest_plot_specific], ignore_index=True)
+                    
+                # Now trying to fit
+                
+                # Finding the median of 'eq_time' for each unique value of 'T_C'
+                median_data = df_interest_plot.groupby('T_C')['eq_time'].median().reset_index()
+                percentile_25th = df_interest_plot.groupby('T_C')['eq_time'].quantile(0.25).reset_index()
+                percentile_75th = df_interest_plot.groupby('T_C')['eq_time'].quantile(0.75).reset_index()
+                
+                # Creating a new DataFrame with the median values
+                median_data_df = pd.DataFrame(median_data, columns=['T_C', 'eq_time'])
+                
+                # Fitting the exponential decay function to the data
+                a_fit, b_fit = exp_fit_T_eqTime(median_data_df['T_C'], median_data_df['eq_time'])
+                
+                # Generating the fitted curve
+                x_fit = np.linspace(20,60,100)
+                y_fit = exp_func_T_eqTime(x_fit, a_fit, b_fit)
+                
+                x_fit_short = np.array((25,35,45,55)) #35
+                y_fit_short = exp_func_T_eqTime(x_fit_short, a_fit, b_fit)
+                
+                
+                # Calculating the total sum y_fit squares and residual sum of squares
+                ss_res = np.sum(( median_data_df['eq_time'] - y_fit_short) ** 2)
+                ss_tot = np.sum(( median_data_df['eq_time'] - np.mean(y_fit_short)) ** 2)
+                
+                # # Calculating R-squared
+                r_squared_calc = 1 - (ss_res / ss_tot)
+                
+                # Start plotting figure
+                # plt.close()
+                plt.figure(figsize=(2.5,3),dpi=300)
+                # fig, ax = plt.subplots(figsize=(4,3),dpi=300)
+                
+                sns.scatterplot(data=median_data_df,x='T_C',y='eq_time')
+                sns.lineplot(x=x_fit,y=y_fit, color='red',label='Exponential fit')
+                
+                
+                # Extract values from percentile DataFrames
+                lower_error = median_data_df['eq_time'] - percentile_25th['eq_time']
+                upper_error = percentile_75th['eq_time'] - median_data_df['eq_time']
+                
+                # Adding error bars
+                plt.errorbar(median_data_df['T_C'], median_data_df['eq_time'], yerr=[lower_error, upper_error], fmt='o', capsize=3, capthick=1, elinewidth=1)
+
+                plt.legend().remove()            
+                plt.tight_layout()
+                
+                plt.savefig("figures/"+folder_run_name+desired_foldername+"scatterplot_temperature_equivalent_notNorm_no65C_"+
+                            batch_name+"_base_"+str(base_T)+".png",
+                            dpi=300)
+                
+                # Add list
+                batch_name_list.append(batch_name)
+                base_T_list.append(base_T)
+                a_fit_list.append(a_fit)
+                b_fit_list.append(b_fit)
+                r_squared_list.append(r_squared_calc)
+                
+
+                # Start plotting figure with ylim
+                # plt.close()
+                plt.figure(figsize=(2.5,3),dpi=300)
+                
+                sns.scatterplot(data=median_data_df,x='T_C',y='eq_time')
+                sns.lineplot(x=x_fit,y=y_fit, color='red',label='Exponential fit')
+                
+                # Extract values from percentile DataFrames
+                lower_error = median_data_df['eq_time'] - percentile_25th['eq_time']
+                upper_error = percentile_75th['eq_time'] - median_data_df['eq_time']
+                
+                # Adding error bars
+                plt.errorbar(median_data_df['T_C'], median_data_df['eq_time'], yerr=[lower_error, upper_error], fmt='o', capsize=3, capthick=1, elinewidth=1)
+
+                # Add ylim
+                if batch_name == 'SAM':
+                    plt.ylim(-1,15)
+
+                elif batch_name == 'NiOx-SAM':
+                    plt.ylim(-1,20)
+
+                plt.legend().remove()            
+                plt.tight_layout()
+                
+                plt.savefig("figures/"+folder_run_name+desired_foldername+"scatterplot_temperature_equivalent_notNorm_no65C_ylim_"+
+                            batch_name+"_base_"+str(base_T)+".png",
+                            dpi=300)
+                            
+                
+            except:
+                print(f'{column_interest} error!')
+                break
+
+    # Create dataframe from all the data
+    dict_df = {
+        'batch_name': batch_name_list,
+        'base_T_C': base_T_list,
+        'a_fit': a_fit_list,
+        'b_fit': b_fit_list,
+        'r_squared': r_squared_list,
+        }
+
+    result_fitting_eq_time_df = pd.DataFrame(dict_df)
+
+    # Now calculate for 25C vs 55C, and acceleration factors?
+    result_fitting_eq_time_df['25C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(25*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['35C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(35*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['55C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(55*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['65C_eq_time']=result_fitting_eq_time_df['a_fit']*np.exp(65*result_fitting_eq_time_df['b_fit'])
+    result_fitting_eq_time_df['acceleration_factor_25C_55C']=result_fitting_eq_time_df['25C_eq_time']/result_fitting_eq_time_df['55C_eq_time']
+    result_fitting_eq_time_df['acceleration_factor_25C_65C']=result_fitting_eq_time_df['25C_eq_time']/result_fitting_eq_time_df['65C_eq_time']
+
+
+    # Save to csv
+    result_fitting_eq_time_df.to_csv("figures/"+folder_run_name+desired_foldername+
+                                    "scatterplot_temperature_equivalent_notNorm_fitting_exponential_no65C.csv",
+                            index=False)
 
 # %%
